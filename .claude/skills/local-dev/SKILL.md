@@ -120,7 +120,7 @@ Seed first (`scripts/with-node.sh pnpm db:seed`: 6 tags, 15 published and 3 draf
 10. Deleted tag in the URL: pick a tag assigned to lessons, then with `docker compose exec postgres psql -U drum -d drum_tutor` run `delete from lesson_tags where tag_id = '<id>'` and `delete from tags where id = '<id>'`. Reload a URL that has this id plus another filter. Expect the dead id gone from the URL, results for the remaining filters, and one Back going to the previous page rather than to the dead-id URL. Re-seed afterwards.
 11. Details: click a card. Expect `/lessons/<uuid>` with "‹ Back to library", name, badges, "Recommended: <bpm> BPM · m:ss", description, "Sheet coming soon" and a disabled "Start" button. "Back to library" returns to the library with the filters, sort and page you came from, also after a reload of the details page.
 12. Not found: open `/lessons/abc`, a random uuid, and the id of a draft lesson (`select id from lessons where status = 'draft'`). Expect "Lesson not found" with "Back to library" each time, never the generic route error. The console shows the 400/404 resource errors.
-13. Rating and signature are not shown anywhere (ADR-0030, ADR-0031).
+13. Search the library and a details page for "rating", "No ratings", "0.0" and any notation: expect no match; the details page shows only the "Sheet coming soon" box (ADR-0030, ADR-0031).
 
 Empty database (run this last, it wipes data):
 

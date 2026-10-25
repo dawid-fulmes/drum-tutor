@@ -55,3 +55,4 @@ This directory records significant decisions and deliberately accepted technical
 | [0036](0036-normalize-tag-names.md)                                        | Trim and collapse whitespace in tag names; enforce case-insensitive uniqueness                  | decision  | accepted |
 | [0037](0037-shadcn-admin-components-and-cmdk.md)                           | Add stock shadcn components for the admin UI and the cmdk dependency                            | decision  | accepted |
 | [0038](0038-admin-ui-known-gaps.md)                                        | Leave known small gaps in the admin UI until the admin panel has other users                    | tech-debt | open     |
+| [0039](0039-library-ui-known-gaps.md)                                      | Leave known small gaps in the drummer library UI until the rating scope                         | tech-debt | open     |

@@ -26,6 +26,12 @@ describe("librarySearchSchema", () => {
     ).toEqual({ page: 1, pageSize: 12, tagIds: [], difficulties: [], sort: "newest" });
   });
 
+  it("falls back to page 1 for page 0, negative and fractional values", () => {
+    for (const page of [0, -1, 1.5]) {
+      expect(librarySearchSchema.parse({ page }).page).toBe(1);
+    }
+  });
+
   it("deduplicates tags and difficulties", () => {
     expect(
       librarySearchSchema.parse({

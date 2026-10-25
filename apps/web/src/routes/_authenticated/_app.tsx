@@ -33,7 +33,9 @@ function DrummerShell() {
           </Button>
         </div>
       </header>
-      <Outlet />
+      <main className="mx-auto max-w-5xl p-6">
+        <Outlet />
+      </main>
     </div>
   );
 }

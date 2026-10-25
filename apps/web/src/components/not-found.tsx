@@ -5,10 +5,11 @@ import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from "@/components/ui/em
 type NotFoundProps = {
   title: string;
   backTo: LinkProps["to"];
+  backSearch?: LinkProps["search"];
   backLabel: string;
 };
 
-export function NotFound({ title, backTo, backLabel }: NotFoundProps) {
+export function NotFound({ title, backTo, backSearch, backLabel }: NotFoundProps) {
   return (
     <Empty>
       <EmptyHeader>
@@ -16,7 +17,9 @@ export function NotFound({ title, backTo, backLabel }: NotFoundProps) {
       </EmptyHeader>
       <EmptyContent>
         <Button asChild variant="outline">
-          <Link to={backTo}>{backLabel}</Link>
+          <Link to={backTo} search={backSearch}>
+            {backLabel}
+          </Link>
         </Button>
       </EmptyContent>
     </Empty>

@@ -10,13 +10,25 @@ import { formatDuration } from "./duration";
 import { formatDifficulty } from "./format";
 import { lessonQueryOptions } from "./lessons.api";
 
+// Set by the library cards; survives a reload of this page because it lives in history state.
+function useLibrarySearch() {
+  return useLocation({ select: (location) => location.state.librarySearch });
+}
+
 export function LessonNotFound() {
-  return <NotFound title="Lesson not found" backTo="/lessons" backLabel="Back to library" />;
+  const librarySearch = useLibrarySearch();
+  return (
+    <NotFound
+      title="Lesson not found"
+      backTo="/lessons"
+      backSearch={librarySearch}
+      backLabel="Back to library"
+    />
+  );
 }
 
 function BackToLibrary() {
-  // Set by the library cards; survives a reload of this page because it lives in history state.
-  const librarySearch = useLocation({ select: (location) => location.state.librarySearch });
+  const librarySearch = useLibrarySearch();
   return (
     <Button asChild variant="ghost" size="sm" className="justify-self-start">
       <Link to="/lessons" search={librarySearch}>
@@ -41,7 +53,7 @@ export function LessonDetails({ id }: { id: string }) {
   if (!lesson.data) {
     return (
       <div className="grid max-w-2xl gap-4">
-        <Skeleton className="h-8 w-32" />
+        <BackToLibrary />
         <Skeleton className="h-8 w-2/3" />
         <Skeleton className="h-6 w-1/2" />
         <Skeleton className="h-5 w-40" />

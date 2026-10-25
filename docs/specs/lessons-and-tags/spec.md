@@ -408,3 +408,4 @@ When all plans are done, tick US-3, US-4, US-16, US-17a, US-18 and US-19 in the 
   - `pageItems` lists every page when `totalPages` ≤ 5.
   - A Biome override relaxes lint rules for vendored shadcn files (ADR-0037).
   - Knowingly left admin UI gaps are tracked in ADR-0038.
+- 2026-10-25 — Knowingly left library UI gaps are tracked in ADR-0039.

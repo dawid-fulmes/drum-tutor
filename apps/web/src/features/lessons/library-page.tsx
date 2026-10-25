@@ -37,7 +37,7 @@ export function LibraryPage() {
     if (!tags.isSuccess || tags.data.length >= search.tagIds.length) return;
     const known = new Set(tags.data.map((tag) => tag.id));
     void navigate({
-      search: (prev) => ({ ...prev, tagIds: prev.tagIds.filter((id) => known.has(id)) }),
+      search: (prev) => ({ ...prev, tagIds: prev.tagIds.filter((id) => known.has(id)), page: 1 }),
       replace: true,
     });
   }, [tags.isSuccess, tags.data, search.tagIds.length, navigate]);
@@ -57,9 +57,9 @@ export function LibraryPage() {
           </p>
         )}
       </div>
-      {lessons.isError ? (
+      {lessons.isError && !lessons.data ? (
         <QueryError error={lessons.error} onRetry={() => lessons.refetch()} />
-      ) : lessons.isPending ? (
+      ) : !lessons.data ? (
         <LessonGrid>
           {Array.from({ length: search.pageSize }, (_, index) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: static placeholders without identity
