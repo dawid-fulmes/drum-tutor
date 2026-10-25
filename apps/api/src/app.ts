@@ -4,6 +4,8 @@ import Fastify, { type FastifyInstance } from "fastify";
 import { serializerCompiler, validatorCompiler } from "fastify-type-provider-zod";
 import { authRoutes } from "./modules/auth/auth.routes";
 import { healthRoutes } from "./modules/health/health.routes";
+import { adminTagsRoutes } from "./modules/tags/admin-tags.routes";
+import { tagsRoutes } from "./modules/tags/tags.routes";
 import { authPlugin } from "./plugins/auth";
 import { errorHandlerPlugin } from "./plugins/error-handler";
 import { openApiPlugin } from "./plugins/openapi";
@@ -28,6 +30,8 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
 
   await app.register(healthRoutes, { db: options.db });
   await app.register(authRoutes, { db: options.db });
+  await app.register(tagsRoutes, { db: options.db });
+  await app.register(adminTagsRoutes, { db: options.db });
 
   return app;
 }

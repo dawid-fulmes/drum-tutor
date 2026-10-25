@@ -4,6 +4,7 @@ import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createTestApp } from "../../test/helpers";
+import { AppError } from "./error-handler";
 
 async function registerTestRoutes(app: FastifyInstance) {
   await app.register(async (scope) => {
@@ -13,6 +14,9 @@ async function registerTestRoutes(app: FastifyInstance) {
       { schema: { body: z.object({ name: z.string().min(1) }) } },
       async (request) => request.body,
     );
+    typed.get("/api/test/conflict", async () => {
+      throw new AppError(409, "TAG_IN_USE", "Tag is busy", [{ path: "id", message: "busy" }]);
+    });
     typed.get("/api/test/boom", async () => {
       throw new Error("secret detail");
     });
@@ -74,5 +78,17 @@ describe("error handler", () => {
     const body = ApiErrorSchema.parse(res.json());
     expect(body.error.code).toBe("VALIDATION_ERROR");
     expect(body.error.details?.[0]?.path).toContain("name");
+  });
+
+  it("AppError → its status and code in ApiError shape, with details", async () => {
+    const res = await ctx.app.inject({ method: "GET", url: "/api/test/conflict" });
+    expect(res.statusCode).toBe(409);
+    expect(ApiErrorSchema.parse(res.json())).toEqual({
+      error: {
+        code: "TAG_IN_USE",
+        message: "Tag is busy",
+        details: [{ path: "id", message: "busy" }],
+      },
+    });
   });
 });

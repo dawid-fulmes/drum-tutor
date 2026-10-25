@@ -11,9 +11,26 @@ export function apiError(
   return { error: { code, message, ...(details ? { details } : {}) } };
 }
 
+/** A domain error with a stable code; the error handler sends it as an ApiError (ADR-0022). */
+export class AppError extends Error {
+  constructor(
+    readonly statusCode: number,
+    readonly code: string,
+    message: string,
+    readonly details?: ApiError["error"]["details"],
+  ) {
+    super(message);
+    this.name = "AppError";
+  }
+}
+
 /** Maps every error and unknown route to the shared ApiError shape (ADR-0022). */
 export const errorHandlerPlugin = fp(async (app: FastifyInstance) => {
   app.setErrorHandler<FastifyError>((error, request, reply) => {
+    if (error instanceof AppError) {
+      return reply.code(error.statusCode).send(apiError(error.code, error.message, error.details));
+    }
+
     if (hasZodFastifySchemaValidationErrors(error)) {
       const details = error.validation.map((issue) => ({
         path:
