@@ -53,3 +53,4 @@ This directory records significant decisions and deliberately accepted technical
 | [0034](0034-create-practice-logs-table-before-logging.md)                  | Create the practice_logs table before logging exists, so lesson locking is real now             | decision  | accepted |
 | [0035](0035-admin-panel-behind-email-login.md)                             | Put the admin panel behind the same email login as the drummer app                              | decision  | accepted |
 | [0036](0036-normalize-tag-names.md)                                        | Trim and collapse whitespace in tag names; enforce case-insensitive uniqueness                  | decision  | accepted |
+| [0037](0037-shadcn-admin-components-and-cmdk.md)                           | Add stock shadcn components for the admin UI and the cmdk dependency                            | decision  | accepted |
