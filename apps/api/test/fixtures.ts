@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { ApiPaths } from "@drum-tutor/contracts";
 import {
   type Database,
@@ -5,6 +6,7 @@ import {
   lessons,
   lessonTags,
   type NewLessonRow,
+  type NewPracticeLogRow,
   type PracticeLogRow,
   practiceLogs,
   type TagRow,
@@ -57,19 +59,30 @@ export async function insertLesson(
   return row;
 }
 
-export async function insertPracticeLog(db: Database, lessonId: string): Promise<PracticeLogRow> {
-  const email = "logger@example.com";
+export async function insertUser(db: Database, email: string): Promise<{ id: string }> {
   const [existing] = await db.select().from(users).where(eq(users.email, email));
-  const user = existing ?? (await db.insert(users).values({ email }).returning())[0];
+  if (existing) return existing;
+  const [created] = await db.insert(users).values({ email }).returning();
+  return created as { id: string };
+}
+
+export async function insertPracticeLog(
+  db: Database,
+  lessonId: string,
+  values: Partial<NewPracticeLogRow> = {},
+): Promise<PracticeLogRow> {
+  const userId = values.userId ?? (await insertUser(db, "logger@example.com")).id;
   const [row] = await db
     .insert(practiceLogs)
     .values({
-      userId: (user as { id: string }).id,
+      userId,
       lessonId,
       durationSeconds: 180,
       tempoBpm: 60,
       completedAt: new Date(),
       localDate: new Date().toISOString().slice(0, 10),
+      idempotencyKey: randomUUID(),
+      ...values,
     })
     .returning();
   return row as PracticeLogRow;

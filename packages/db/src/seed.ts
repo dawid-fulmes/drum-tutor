@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { Database } from "./client";
 import { lessons, lessonTags, practiceLogs, tags, users } from "./schema";
 
@@ -205,10 +206,57 @@ const LESSONS: SeedLesson[] = [
   },
 ];
 
-// Index of the published lesson that gets the practice log (and so is locked).
-const LOGGED_LESSON_INDEX = 1;
+// Published lessons that get the seed user's practice (and so are locked). Together they cover four
+// tags: Groove, Rudiments, Hand speed and Weak hand.
+const LOGGED_LESSON_INDEXES = [1, 2, 5] as const;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+// Practice days per week (0 = first day of the week counted from the start of the history), rotated
+// weekly so every week has 3–5 practice days and some rest days.
+const WEEK_PATTERNS = [
+  [0, 2, 4],
+  [1, 3, 5, 6],
+  [0, 1, 3, 5],
+  [0, 2, 3, 4, 6],
+] as const;
+
+type SeedLog = { lesson: SeedLesson; date: Date; minutes: number; tempo: number; hour: number };
+
+/**
+ * A deterministic practice history from 13 months ago up to yesterday (spec §4 "Seed"): 3–5 practice
+ * days a week, a 4-day break every 6 weeks, 1–2 sessions a practice day, 5–30 minutes each.
+ */
+function practiceHistory(now: number): SeedLog[] {
+  const today = new Date(now);
+  const end = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()) - DAY_MS;
+  const startDate = new Date(end);
+  startDate.setUTCMonth(startDate.getUTCMonth() - 13);
+  const logged = LOGGED_LESSON_INDEXES.map((i) => LESSONS[i] as SeedLesson);
+
+  const logs: SeedLog[] = [];
+  for (let day = 0, t = startDate.getTime(); t <= end; day++, t += DAY_MS) {
+    const week = Math.floor(day / 7);
+    const weekday = day % 7;
+    if (week % 6 === 5 && weekday < 4) continue;
+    const pattern: readonly number[] = WEEK_PATTERNS[week % WEEK_PATTERNS.length] ?? [];
+    if (!pattern.includes(weekday)) continue;
+
+    const sessions = day % 3 === 0 ? 2 : 1;
+    for (let session = 0; session < sessions; session++) {
+      // Rotate lessons per session, so every practised tag shows up every week.
+      const lesson = logged[logs.length % logged.length] as SeedLesson;
+      logs.push({
+        lesson,
+        date: new Date(t),
+        minutes: 5 + ((day * 11 + session * 7) % 26),
+        tempo: Math.min(300, Math.max(30, lesson.tempo + ((day % 5) - 2) * 2)),
+        hour: 18 + session,
+      });
+    }
+  }
+  return logs;
+}
 
 /** Replaces all lesson data with the demo dataset (spec §4, "Seed"). Users are kept. */
 export async function seedDatabase(db: Database): Promise<void> {
@@ -226,7 +274,9 @@ export async function seedDatabase(db: Database): Promise<void> {
     const tagId = new Map(tagRows.map((t) => [t.name, t.id]));
 
     // Spread over the last ~30 days; each lesson is a fixed step apart, so every timestamp is distinct.
+    // Practised lessons are ~14 months old instead, so no log predates its lesson.
     const step = (30 * DAY_MS) / LESSONS.length;
+    const loggedIndexes: readonly number[] = LOGGED_LESSON_INDEXES;
     const lessonRows = await tx
       .insert(lessons)
       .values(
@@ -237,7 +287,11 @@ export async function seedDatabase(db: Database): Promise<void> {
           recommendedTempoBpm: l.tempo,
           recommendedDurationSeconds: l.minutes * 60,
           status: l.status,
-          createdAt: new Date(now - 30 * DAY_MS + i * step),
+          createdAt: new Date(
+            loggedIndexes.includes(i)
+              ? now - 425 * DAY_MS + i * DAY_MS
+              : now - 30 * DAY_MS + i * step,
+          ),
         })),
       )
       .returning();
@@ -257,15 +311,18 @@ export async function seedDatabase(db: Database): Promise<void> {
       .values({ email: "seed@example.com" })
       .onConflictDoUpdate({ target: users.email, set: { email: "seed@example.com" } })
       .returning();
-    const logged = LESSONS[LOGGED_LESSON_INDEX] as SeedLesson;
-    const completedAt = new Date(now - DAY_MS);
-    await tx.insert(practiceLogs).values({
-      userId: (seedUser as { id: string }).id,
-      lessonId: idByName.get(logged.name) as string,
-      durationSeconds: logged.minutes * 60,
-      tempoBpm: logged.tempo,
-      completedAt,
-      localDate: completedAt.toISOString().slice(0, 10),
-    });
+    const userId = (seedUser as { id: string }).id;
+    const rows = practiceHistory(now).map((log) => ({
+      userId,
+      lessonId: idByName.get(log.lesson.name) as string,
+      durationSeconds: log.minutes * 60,
+      tempoBpm: log.tempo,
+      completedAt: new Date(log.date.getTime() + log.hour * 60 * 60 * 1000),
+      localDate: log.date.toISOString().slice(0, 10),
+      idempotencyKey: randomUUID(),
+    }));
+    for (let i = 0; i < rows.length; i += 500) {
+      await tx.insert(practiceLogs).values(rows.slice(i, i + 500));
+    }
   });
 }

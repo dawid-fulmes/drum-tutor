@@ -1,11 +1,13 @@
+import { randomUUID } from "node:crypto";
 import { lessons, lessonTags, practiceLogs, tags } from "@drum-tutor/db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { insertLesson, insertPracticeLog, insertTag } from "../test/fixtures";
+import { insertLesson, insertPracticeLog, insertTag, insertUser } from "../test/fixtures";
 import { createTestApp, resetDatabase } from "../test/helpers";
 
 const PG_CHECK_VIOLATION = "23514";
 const PG_UNIQUE_VIOLATION = "23505";
+const PG_NOT_NULL_VIOLATION = "23502";
 // ON DELETE RESTRICT reports restrict_violation, not foreign_key_violation.
 const PG_RESTRICT_VIOLATION = "23001";
 
@@ -75,6 +77,50 @@ describe("database constraints", () => {
     const code = await pgErrorCode(ctx.db.delete(lessons).where(eq(lessons.id, lesson.id)));
     expect(code).toBe(PG_RESTRICT_VIOLATION);
     expect(await ctx.db.select().from(practiceLogs)).toHaveLength(1);
+  });
+
+  describe("practice log idempotency key", () => {
+    // Raw SQL, so the test does not depend on the fixture's defaults.
+    const insertLog = (userId: string, lessonId: string, key: string | null) =>
+      ctx.db.execute(sql`
+        insert into practice_logs
+          (user_id, lesson_id, duration_seconds, tempo_bpm, completed_at, local_date, idempotency_key)
+        values (${userId}, ${lessonId}, 180, 60, now(), current_date, ${key})
+      `);
+
+    it("rejects a second log of the same user with the same key", async () => {
+      const tag = await insertTag(ctx.db, "Groove");
+      const lesson = await insertLesson(ctx.db, { tagIds: [tag.id] });
+      const user = await insertUser(ctx.db, "drummer@example.com");
+      const key = randomUUID();
+      await insertLog(user.id, lesson.id, key);
+      expect(await pgErrorCode(insertLog(user.id, lesson.id, key))).toBe(PG_UNIQUE_VIOLATION);
+    });
+
+    it("allows the same key for two different users", async () => {
+      const tag = await insertTag(ctx.db, "Groove");
+      const lesson = await insertLesson(ctx.db, { tagIds: [tag.id] });
+      const first = await insertUser(ctx.db, "first@example.com");
+      const second = await insertUser(ctx.db, "second@example.com");
+      const key = randomUUID();
+      await insertLog(first.id, lesson.id, key);
+      await insertLog(second.id, lesson.id, key);
+      expect(await ctx.db.select().from(practiceLogs)).toHaveLength(2);
+    });
+
+    it("has no default", async () => {
+      const tag = await insertTag(ctx.db, "Groove");
+      const lesson = await insertLesson(ctx.db, { tagIds: [tag.id] });
+      const user = await insertUser(ctx.db, "drummer@example.com");
+      const code = await pgErrorCode(
+        ctx.db.execute(sql`
+          insert into practice_logs
+            (user_id, lesson_id, duration_seconds, tempo_bpm, completed_at, local_date)
+          values (${user.id}, ${lesson.id}, 180, 60, now(), current_date)
+        `),
+      );
+      expect(code).toBe(PG_NOT_NULL_VIOLATION);
+    });
   });
 
   it("defaults a new lesson to draft", async () => {

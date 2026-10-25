@@ -16,6 +16,23 @@ export const TEMPO_BPM = { min: 30, max: 300 } as const;
 export const DURATION_SECONDS = { min: 30, max: 3600, step: 30 } as const;
 
 const TEMPO_MESSAGE = "Tempo must be between 30 and 300 BPM";
+const DURATION_RANGE_MESSAGE = "Duration must be between 0:30 and 60:00";
+const DURATION_STEP_MESSAGE = "Duration must be in 30-second steps";
+
+/** Tempo in BPM (R10). */
+export const TempoBpmSchema = z
+  .number(TEMPO_MESSAGE)
+  .int(TEMPO_MESSAGE)
+  .min(TEMPO_BPM.min, TEMPO_MESSAGE)
+  .max(TEMPO_BPM.max, TEMPO_MESSAGE);
+
+/** Duration in seconds, 30 s – 60 min in 30-second steps (R10). */
+export const DurationSecondsSchema = z
+  .number(DURATION_RANGE_MESSAGE)
+  .int(DURATION_STEP_MESSAGE)
+  .min(DURATION_SECONDS.min, DURATION_RANGE_MESSAGE)
+  .max(DURATION_SECONDS.max, DURATION_RANGE_MESSAGE)
+  .multipleOf(DURATION_SECONDS.step, DURATION_STEP_MESSAGE);
 
 export const LessonInputSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(120, "Name can be at most 120 characters"),
@@ -30,17 +47,8 @@ export const LessonInputSchema = z.object({
     .min(1, "Choose at least one tag")
     .max(10, "A lesson can have at most 10 tags")
     .refine((ids) => new Set(ids).size === ids.length, "A tag can only be selected once"),
-  recommendedTempoBpm: z
-    .number(TEMPO_MESSAGE)
-    .int(TEMPO_MESSAGE)
-    .min(TEMPO_BPM.min, TEMPO_MESSAGE)
-    .max(TEMPO_BPM.max, TEMPO_MESSAGE),
-  recommendedDurationSeconds: z
-    .number("Duration must be between 0:30 and 60:00")
-    .int("Duration must be in 30-second steps")
-    .min(DURATION_SECONDS.min, "Duration must be between 0:30 and 60:00")
-    .max(DURATION_SECONDS.max, "Duration must be between 0:30 and 60:00")
-    .multipleOf(DURATION_SECONDS.step, "Duration must be in 30-second steps"),
+  recommendedTempoBpm: TempoBpmSchema,
+  recommendedDurationSeconds: DurationSecondsSchema,
 });
 export type LessonInput = z.input<typeof LessonInputSchema>;
 

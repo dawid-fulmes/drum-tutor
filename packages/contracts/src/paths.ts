@@ -13,6 +13,9 @@ export const ApiPaths = {
   adminLesson: "/api/admin/lessons/:id",
   adminLessonPublish: "/api/admin/lessons/:id/publish",
   adminLessonUnpublish: "/api/admin/lessons/:id/unpublish",
+  practiceLogs: "/api/practice-logs",
+  statsDaily: "/api/stats/daily",
+  statsWeekly: "/api/stats/weekly",
 } as const;
 
 /** Replaces the `:id` segment of a path template. */

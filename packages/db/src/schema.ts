@@ -95,6 +95,8 @@ export const practiceLogs = pgTable(
     completedAt: timestamp("completed_at", { withTimezone: true }).notNull(),
     // The user's local calendar date at completion (R12, ADR-0007).
     localDate: date("local_date").notNull(),
+    // The client sends the same key on every retry of one session (US-11b, ADR-0042).
+    idempotencyKey: uuid("idempotency_key").notNull(),
   },
   (t) => [
     check(
@@ -103,6 +105,10 @@ export const practiceLogs = pgTable(
     ),
     check("practice_logs_tempo_range", sql`${t.tempoBpm} between 30 and 300`),
     index("practice_logs_lesson_id_idx").on(t.lessonId),
+    uniqueIndex("practice_logs_user_idempotency_key_idx").on(t.userId, t.idempotencyKey),
+    // The migration adds INCLUDE (lesson_id, duration_seconds) by hand, so stats read only the
+    // index; Drizzle 0.45 cannot express INCLUDE (ADR-0048).
+    index("practice_logs_user_local_date_idx").on(t.userId, t.localDate),
   ],
 );
 
@@ -111,3 +117,4 @@ export type TagRow = typeof tags.$inferSelect;
 export type LessonRow = typeof lessons.$inferSelect;
 export type NewLessonRow = typeof lessons.$inferInsert;
 export type PracticeLogRow = typeof practiceLogs.$inferSelect;
+export type NewPracticeLogRow = typeof practiceLogs.$inferInsert;
