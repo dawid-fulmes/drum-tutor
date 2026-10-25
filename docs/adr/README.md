@@ -46,3 +46,10 @@ This directory records significant decisions and deliberately accepted technical
 | [0027](0027-defer-committed-e2e-suite-use-playwright-plugin.md)            | Defer a committed Playwright e2e suite; agents verify the UI through the Playwright plugin      | tech-debt | open     |
 | [0028](0028-fastify-zod-type-provider-and-swagger-for-openapi.md)          | Use fastify-type-provider-zod with @fastify/swagger to validate routes and generate OpenAPI     | decision  | accepted |
 | [0029](0029-pnpm-supply-chain-policy-exceptions.md)                        | Accept pnpm 12 supply-chain policy exceptions for pinned fresh releases and build scripts       | tech-debt | open     |
+| [0030](0030-defer-lesson-signature.md)                                     | Create and publish lessons without a signature until the signature scope                        | tech-debt | open     |
+| [0031](0031-library-without-rating-until-rating-scope.md)                  | Leave rating out of the library contract and UI until the rating scope                          | decision  | accepted |
+| [0032](0032-offset-pagination-contract.md)                                 | Paginate lists with a 1-based page and page size, returning totals                              | decision  | accepted |
+| [0033](0033-tag-lookup-with-search-and-ids.md)                             | Read tags through one paginated endpoint with server-side name search and lookup by ids         | decision  | accepted |
+| [0034](0034-create-practice-logs-table-before-logging.md)                  | Create the practice_logs table before logging exists, so lesson locking is real now             | decision  | accepted |
+| [0035](0035-admin-panel-behind-email-login.md)                             | Put the admin panel behind the same email login as the drummer app                              | decision  | accepted |
+| [0036](0036-normalize-tag-names.md)                                        | Trim and collapse whitespace in tag names; enforce case-insensitive uniqueness                  | decision  | accepted |
