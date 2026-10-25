@@ -7,6 +7,7 @@ import {
 } from "@drum-tutor/contracts";
 import { type Database, lessonTags, tags } from "@drum-tutor/db";
 import { and, asc, count, eq, ilike, inArray, type SQL, sql } from "drizzle-orm";
+import type { DbExecutor } from "../../lib/db";
 import { pageOffset, toPage } from "../../lib/pagination";
 import { hasPgErrorCode, PgErrorCode } from "../../lib/pg-errors";
 import { escapeLike } from "../../lib/sql";
@@ -106,7 +107,7 @@ export async function deleteTag(db: Database, id: string): Promise<void> {
   }
 }
 
-export async function findExistingTagIds(db: Database, ids: string[]): Promise<Set<string>> {
+export async function findExistingTagIds(db: DbExecutor, ids: string[]): Promise<Set<string>> {
   if (ids.length === 0) return new Set();
   const rows = await db.select({ id: tags.id }).from(tags).where(inArray(tags.id, ids));
   return new Set(rows.map((row) => row.id));
