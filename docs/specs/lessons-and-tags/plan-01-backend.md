@@ -1,7 +1,7 @@
 # Lessons and Tags — Plan 01: Backend
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-- **Status:** approved
+- **Status:** done
 
 **Goal:** Everything server-side for spec §4, §5 and §7: the migration, the contracts, the tag and lesson endpoints with locking, the seed and `pnpm db:seed`, and the integration tests that prove every rule.
 
@@ -67,7 +67,7 @@
   - `ApiErrorCode` gains `TAG_NAME_TAKEN`, `TAG_IN_USE`, `LESSON_LOCKED`.
   - `ApiPaths` gains `tags: "/api/tags"`, `lessons: "/api/lessons"`, `lesson: "/api/lessons/:id"`, `adminTags: "/api/admin/tags"`, `adminTag: "/api/admin/tags/:id"`, `adminLessons: "/api/admin/lessons"`, `adminLesson: "/api/admin/lessons/:id"`, `adminLessonPublish: "/api/admin/lessons/:id/publish"`, `adminLessonUnpublish: "/api/admin/lessons/:id/unpublish"`, plus `withId(path: string, id: string): string` replacing `:id`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 // tags.test.ts
@@ -122,10 +122,10 @@ it("queryArray accepts a single value, an array, dedupes, and caps", () => {
 it("withId fills the id", () => expect(withId(ApiPaths.lesson, "x")).toBe("/api/lessons/x"));
 ```
 
-- [ ] **Step 2: Run** `scripts/with-node.sh pnpm --filter @drum-tutor/contracts test`. Expected: FAIL, modules missing.
-- [ ] **Step 3: Implement the schemas listed under Interfaces.** `queryArray` caps on the raw input (before dedupe) so a huge query is rejected cheaply. Keep schemas OpenAPI-friendly: `z.union([item, z.array(item)])` followed by `.transform`, with `.optional()` / default on the outside; Task 3 verifies `/api/docs/json` still builds.
-- [ ] **Step 4: Run** the contracts tests and `scripts/with-node.sh pnpm typecheck`. Expected: PASS.
-- [ ] **Step 5: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
+- [x] **Step 2: Run** `scripts/with-node.sh pnpm --filter @drum-tutor/contracts test`. Expected: FAIL, modules missing.
+- [x] **Step 3: Implement the schemas listed under Interfaces.** `queryArray` caps on the raw input (before dedupe) so a huge query is rejected cheaply. Keep schemas OpenAPI-friendly: `z.union([item, z.array(item)])` followed by `.transform`, with `.optional()` / default on the outside; Task 3 verifies `/api/docs/json` still builds.
+- [x] **Step 4: Run** the contracts tests and `scripts/with-node.sh pnpm typecheck`. Expected: PASS.
+- [x] **Step 5: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
 
 ### Task 2: Database schema and migration
 
@@ -145,15 +145,15 @@ it("withId fills the id", () => expect(withId(ApiPaths.lesson, "x")).toBe("/api/
   - `insertLesson(db, values: Partial<NewLessonRow> & { tagIds: string[] }): Promise<LessonRow>` — defaults: name `"Lesson"`, description `"Description"`, `beginner`, tempo 60, duration 180, `draft`.
   - `insertPracticeLog(db, lessonId: string): Promise<PracticeLogRow>` — creates (or reuses) user `logger@example.com`, tempo 60, duration 180, `completed_at` now, `local_date` today.
 
-- [ ] **Step 1: Write the failing test** `db-constraints.test.ts`, inserting directly with Drizzle:
+- [x] **Step 1: Write the failing test** `db-constraints.test.ts`, inserting directly with Drizzle:
   - `recommended_duration_seconds` 45 and 3630, and tempo 29, are rejected by check constraints.
   - Two tags `"Groove"` and `"groove"` → the second insert fails (unique `lower(name)`).
   - Deleting a tag referenced by `lesson_tags` fails; deleting a lesson removes its `lesson_tags`; deleting a lesson with a practice log fails.
   - A new lesson defaults to `status = 'draft'`.
-- [ ] **Step 2: Run** `scripts/with-node.sh pnpm --filter @drum-tutor/api test -- db-constraints`. Expected: FAIL (tables missing).
-- [ ] **Step 3: Add the tables to `schema.ts`** exactly as spec §4: checks via `check()`, the unique index via `uniqueIndex().on(sql\`lower(${t.name})\`)`, index `(status, created_at, id)`on lessons, index on`lesson_tags.tag_id`and`practice_logs.lesson_id`, FK actions as in the spec. Run `scripts/with-node.sh pnpm db:generate --name lessons_and_tags`and read the SQL: it must contain the checks, the expression index and the FK actions. Then write the fixtures and the new`resetDatabase`.
-- [ ] **Step 4: Run** the test file, then the whole API suite (`auth.test.ts` still passes with the new truncate). Expected: PASS.
-- [ ] **Step 5: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
+- [x] **Step 2: Run** `scripts/with-node.sh pnpm --filter @drum-tutor/api test -- db-constraints`. Expected: FAIL (tables missing).
+- [x] **Step 3: Add the tables to `schema.ts`** exactly as spec §4: checks via `check()`, the unique index via `uniqueIndex().on(sql\`lower(${t.name})\`)`, index `(status, created_at, id)`on lessons, index on`lesson_tags.tag_id`and`practice_logs.lesson_id`, FK actions as in the spec. Run `scripts/with-node.sh pnpm db:generate --name lessons_and_tags`and read the SQL: it must contain the checks, the expression index and the FK actions. Then write the fixtures and the new`resetDatabase`.
+- [x] **Step 4: Run** the test file, then the whole API suite (`auth.test.ts` still passes with the new truncate). Expected: PASS.
+- [x] **Step 5: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
 
 ### Task 3: Tag endpoints (drummer + admin) and shared API helpers
 
@@ -173,7 +173,7 @@ it("withId fills the id", () => expect(withId(ApiPaths.lesson, "x")).toBe("/api/
   - `tags.repository.ts`: `listTags(db, q: TagListQuery): Promise<Page<Tag>>`, `listAdminTags(db, q): Promise<Page<AdminTag>>`, `createTag(db, name): Promise<AdminTag>`, `renameTag(db, id, name): Promise<AdminTag>`, `deleteTag(db, id): Promise<void>`. Write functions throw `AppError` (404 `NOT_FOUND`, 409 `TAG_NAME_TAKEN` / `TAG_IN_USE`) using the exact copy. `findExistingTagIds(db, ids: string[]): Promise<Set<string>>` for Task 4.
   - Routes: `tagsRoutes` (`GET /api/tags`), `adminTagsRoutes` (spec §5.3 tag rows), both `FastifyPluginAsyncZod<{ db: Database }>` registered in `buildApp`. `requireUser` as a `preHandler` hook on each plugin.
 
-- [ ] **Step 1: Write the failing tests.** Each test logs in with `loginCookies`. `tags.test.ts`:
+- [x] **Step 1: Write the failing tests.** Each test logs in with `loginCookies`. `tags.test.ts`:
   - sorted case-insensitively by name, then id; `totalItems` / `totalPages` correct for 25 tags with `pageSize=10` (3 pages, last has 5);
   - `q=HAND` matches "Hand speed" and "Weak hand"; `q=%` matches only a tag named "100% wrist" and `q=_` only "left_hand" (Review Focus 3);
   - `ids=<existing>&ids=<unknown>` returns only the existing one; `ids` + `q` combine as AND;
@@ -186,10 +186,10 @@ it("withId fills the id", () => expect(withId(ApiPaths.lesson, "x")).toBe("/api/
   - `DELETE` unused → `204`, then the tag is gone; `DELETE` a tag used only by a draft → `409 TAG_IN_USE`; `DELETE` unknown → `404`;
   - `GET /api/admin/tags` reports `lessonCount` 2 for a tag on one draft and one published lesson;
   - `GET /api/docs/json` lists `/api/tags`, `/api/admin/tags` and `/api/admin/tags/{id}`.
-- [ ] **Step 2: Run** `scripts/with-node.sh pnpm --filter @drum-tutor/api test -- tags`. Expected: FAIL.
-- [ ] **Step 3: Implement** helpers, repository and routes. `createTag` / `renameTag` rely on the unique index: catch `UNIQUE_VIOLATION` → `409`, no pre-check race. Renaming to a new casing of its own name passes the index naturally (same row). `deleteTag` deletes and maps `FOREIGN_KEY_VIOLATION` → `409 TAG_IN_USE`; zero deleted rows → `404`. `q` uses `ilike(name, '%' || escapeLike(q) || '%')` with the default `\` escape. `lessonCount` via a grouped subquery or `count()` with left join in the same query.
-- [ ] **Step 4: Run** the tag tests and the full API suite. Expected: PASS.
-- [ ] **Step 5: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
+- [x] **Step 2: Run** `scripts/with-node.sh pnpm --filter @drum-tutor/api test -- tags`. Expected: FAIL.
+- [x] **Step 3: Implement** helpers, repository and routes. `createTag` / `renameTag` rely on the unique index: catch `UNIQUE_VIOLATION` → `409`, no pre-check race. Renaming to a new casing of its own name passes the index naturally (same row). `deleteTag` deletes and maps `FOREIGN_KEY_VIOLATION` → `409 TAG_IN_USE`; zero deleted rows → `404`. `q` uses `ilike(name, '%' || escapeLike(q) || '%')` with the default `\` escape. `lessonCount` via a grouped subquery or `count()` with left join in the same query.
+- [x] **Step 4: Run** the tag tests and the full API suite. Expected: PASS.
+- [x] **Step 5: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
 
 ### Task 4: Admin lesson endpoints with locking
 
@@ -205,7 +205,7 @@ it("withId fills the id", () => expect(withId(ApiPaths.lesson, "x")).toBe("/api/
   - `admin-lessons.repository.ts`: `listAdminLessons(db, q: PaginationQuery): Promise<Page<AdminLessonSummary>>`, `getAdminLesson(db, id): Promise<AdminLesson>` (throws 404), `createLesson(db, input: LessonInput): Promise<AdminLesson>`, `updateLesson(db, id, input): Promise<AdminLesson>`, `deleteLesson(db, id): Promise<void>`, `publishLesson(db, id): Promise<AdminLesson>`, `unpublishLesson(db, id): Promise<AdminLesson>`. `locked` = `exists (select 1 from practice_logs where lesson_id = lessons.id)` in the same query as the rows.
   - `adminLessonsRoutes` with the lesson rows of spec §5.3; `POST` returns `201`.
 
-- [ ] **Step 1: Write the failing tests** (spec §7 "Lesson create/update validation" and "Lifecycle and locking"):
+- [x] **Step 1: Write the failing tests** (spec §7 "Lesson create/update validation" and "Lifecycle and locking"):
   - create → `201`, `status: "draft"`, `locked: false`, tags sorted by name; a body with `status: "published"` still yields `draft`;
   - validation `400`s: no tags, 11 tags, `[a, a]` (Review Focus 5), tempo 29 / 301, duration 0 / 15 / 45 / 3630; boundaries 30 / 300 BPM and 30 / 3600 s accepted;
   - unknown tag id → `400 VALIDATION_ERROR` with `details` containing `{ path: "tagIds", message: "Unknown tag: <id>" }`, and no lesson row created;
@@ -216,10 +216,10 @@ it("withId fills the id", () => expect(withId(ApiPaths.lesson, "x")).toBe("/api/
   - list: drafts and published, `created_at desc, id desc`, `locked` true exactly for the lesson with a log, totals correct;
   - `GET /api/admin/lessons/<unknown>` → `404 Lesson not found`; `…/not-a-uuid` → `400` (Review Focus 4);
   - all routes → `401` without a cookie (one parameterized test).
-- [ ] **Step 2: Run** `scripts/with-node.sh pnpm --filter @drum-tutor/api test -- admin-lessons`. Expected: FAIL.
-- [ ] **Step 3: Implement.** Writes run in `db.transaction`. `updateLesson`, `deleteLesson`, `unpublishLesson`: `select … from lessons where id = $1 for update` (Drizzle `.for("update")`) → 404 if missing → `exists` practice log → `409 LESSON_LOCKED` → write. `createLesson` / `updateLesson` check `findExistingTagIds` inside the transaction and throw the `400` with one detail per unknown id; a `FOREIGN_KEY_VIOLATION` on the `lesson_tags` insert (tag deleted meanwhile) maps to the same `400`. `updateLesson` deletes and re-inserts `lesson_tags`. `deleteLesson` keeps the FK backstop: map `FOREIGN_KEY_VIOLATION` → `409 LESSON_LOCKED`.
-- [ ] **Step 4: Run** the admin lesson tests and the full API suite. Expected: PASS.
-- [ ] **Step 5: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
+- [x] **Step 2: Run** `scripts/with-node.sh pnpm --filter @drum-tutor/api test -- admin-lessons`. Expected: FAIL.
+- [x] **Step 3: Implement.** Writes run in `db.transaction`. `updateLesson`, `deleteLesson`, `unpublishLesson`: `select … from lessons where id = $1 for update` (Drizzle `.for("update")`) → 404 if missing → `exists` practice log → `409 LESSON_LOCKED` → write. `createLesson` / `updateLesson` check `findExistingTagIds` inside the transaction and throw the `400` with one detail per unknown id; a `FOREIGN_KEY_VIOLATION` on the `lesson_tags` insert (tag deleted meanwhile) maps to the same `400`. `updateLesson` deletes and re-inserts `lesson_tags`. `deleteLesson` keeps the FK backstop: map `FOREIGN_KEY_VIOLATION` → `409 LESSON_LOCKED`.
+- [x] **Step 4: Run** the admin lesson tests and the full API suite. Expected: PASS.
+- [x] **Step 5: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
 
 ### Task 5: Drummer library and lesson details
 
@@ -232,7 +232,7 @@ it("withId fills the id", () => expect(withId(ApiPaths.lesson, "x")).toBe("/api/
 - Consumes: Task 4 `loadTagsForLessons`, `toLessonSummary`; Task 3 pagination helpers.
 - Produces: `listLibrary(db, q: LibraryQuery): Promise<Page<LessonSummary>>`, `getPublishedLesson(db, id): Promise<LessonDetail>` (404 for unknown or draft); `lessonsRoutes` with `GET /api/lessons` and `GET /api/lessons/:id`.
 
-- [ ] **Step 1: Write the failing tests** (spec §7 "Library"):
+- [x] **Step 1: Write the failing tests** (spec §7 "Library"):
   - drafts never listed, and `GET /api/lessons/<draft id>` → `404 Lesson not found`;
   - `tagIds=A&tagIds=B` returns only lessons with both A and B (a lesson with A only and one with B only are excluded); `tagIds=A` (single key) works; `tagIds=A&tagIds=A` behaves like `tagIds=A`; `tagIds=garbage` → `400` (Review Focus 1);
   - `difficulties=beginner&difficulties=advanced` returns lessons of either level; combined with `tagIds` both apply;
@@ -241,10 +241,10 @@ it("withId fills the id", () => expect(withId(ApiPaths.lesson, "x")).toBe("/api/
   - 13 published lessons, `pageSize=12`: page 1 has 12, page 2 has 1, both report `totalItems: 13, totalPages: 2`; page 3 → `200` with `items: []` and the same totals;
   - `pageSize=0` and `pageSize=101` → `400`; no cookie → `401`;
   - details include `description` and tags sorted by name; `GET /api/docs/json` lists `/api/lessons` and `/api/lessons/{id}`.
-- [ ] **Step 2: Run** `scripts/with-node.sh pnpm --filter @drum-tutor/api test -- library`. Expected: FAIL.
-- [ ] **Step 3: Implement.** Base filter `status = 'published'`; difficulties with `inArray`; tag AND filter as `lessons.id in (select lesson_id from lesson_tags where tag_id in (…) group by lesson_id having count(*) = <n>)` with `n` = number of distinct ids (the contract already deduplicates). The same `where` feeds the page query (`orderBy` + `limit` + `offset`) and the `count(*)` query.
-- [ ] **Step 4: Run** the library tests and the full API suite. Expected: PASS.
-- [ ] **Step 5: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
+- [x] **Step 2: Run** `scripts/with-node.sh pnpm --filter @drum-tutor/api test -- library`. Expected: FAIL.
+- [x] **Step 3: Implement.** Base filter `status = 'published'`; difficulties with `inArray`; tag AND filter as `lessons.id in (select lesson_id from lesson_tags where tag_id in (…) group by lesson_id having count(*) = <n>)` with `n` = number of distinct ids (the contract already deduplicates). The same `where` feeds the page query (`orderBy` + `limit` + `offset`) and the `count(*)` query.
+- [x] **Step 4: Run** the library tests and the full API suite. Expected: PASS.
+- [x] **Step 5: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
 
 ### Task 6: Seed, `pnpm db:seed` and docs
 
@@ -257,13 +257,13 @@ it("withId fills the id", () => expect(withId(ApiPaths.lesson, "x")).toBe("/api/
 **Interfaces:**
 - Produces: `seedDatabase(db: Database): Promise<void>` exported from `@drum-tutor/db`. `seed-cli.ts` follows `migrate-cli.ts` (loads root env, fails with the same message when `DATABASE_URL` is missing, prints `Seed data loaded.`).
 
-- [ ] **Step 1: Write the failing test** `seed.test.ts`: after `seedDatabase(db)`, through the API with a login cookie:
+- [x] **Step 1: Write the failing test** `seed.test.ts`: after `seedDatabase(db)`, through the API with a login cookie:
   - `GET /api/lessons?pageSize=12` → `totalItems: 15`, `totalPages: 2`; the three difficulties all occur;
   - `GET /api/admin/lessons?pageSize=100` → 18 items, 3 drafts, exactly one `locked`, which is published;
   - `GET /api/admin/tags` → the 6 tags of spec §4; every lesson has 1–3 tags;
   - running `seedDatabase` a second time gives the same counts, and a user created before seeding still exists.
-- [ ] **Step 2: Run** `scripts/with-node.sh pnpm --filter @drum-tutor/api test -- seed`. Expected: FAIL.
-- [ ] **Step 3: Implement `seedDatabase`** in one transaction: delete `practice_logs`, `lesson_tags`, `lessons`, `tags`; insert the 6 tags and 18 lessons (realistic names and descriptions, e.g. "Single strokes on a pad", "Money beat", "Paradiddle accents"; `created_at` spread over the last 30 days, all distinct); upsert `seed@example.com`; one practice log on one published lesson.
-- [ ] **Step 4: Run** the seed test and the full suite: `scripts/with-node.sh pnpm lint && scripts/with-node.sh pnpm typecheck && scripts/with-node.sh pnpm test`. Expected: all PASS.
-- [ ] **Step 5: Verify against the local app.** `scripts/dev-start.sh`, then `scripts/with-node.sh pnpm db:migrate && scripts/with-node.sh pnpm db:seed` (prints `Seed data loaded.`). Log in with `curl -c` and check `curl -b … 'http://localhost:5330/api/lessons?pageSize=12'` reports `"totalItems":15`. Open `http://localhost:5330/api/docs` and confirm the new paths render. Follow the README "Reset data" steps literally once.
-- [ ] **Step 6: Checkpoint.** `pnpm format`. Tick this plan's checkboxes and set its status to `done`. Commit the task's files to `main`.
+- [x] **Step 2: Run** `scripts/with-node.sh pnpm --filter @drum-tutor/api test -- seed`. Expected: FAIL.
+- [x] **Step 3: Implement `seedDatabase`** in one transaction: delete `practice_logs`, `lesson_tags`, `lessons`, `tags`; insert the 6 tags and 18 lessons (realistic names and descriptions, e.g. "Single strokes on a pad", "Money beat", "Paradiddle accents"; `created_at` spread over the last 30 days, all distinct); upsert `seed@example.com`; one practice log on one published lesson.
+- [x] **Step 4: Run** the seed test and the full suite: `scripts/with-node.sh pnpm lint && scripts/with-node.sh pnpm typecheck && scripts/with-node.sh pnpm test`. Expected: all PASS.
+- [x] **Step 5: Verify against the local app.** `scripts/dev-start.sh`, then `scripts/with-node.sh pnpm db:migrate && scripts/with-node.sh pnpm db:seed` (prints `Seed data loaded.`). Log in with `curl -c` and check `curl -b … 'http://localhost:5330/api/lessons?pageSize=12'` reports `"totalItems":15`. Open `http://localhost:5330/api/docs` and confirm the new paths render. Follow the README "Reset data" steps literally once.
+- [x] **Step 6: Checkpoint.** `pnpm format`. Tick this plan's checkboxes and set its status to `done`. Commit the task's files to `main`.
