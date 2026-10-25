@@ -1,9 +1,9 @@
 # Practice and Stats — Spec
 
-- **Status:** approved
+- **Status:** implemented
 - **Date:** 2026-10-25
-- **Related:** PRD US-7, US-8, US-9, US-10, US-11, US-11a, US-11b, US-14, US-15; R1, R2, R6, R10, R11, R12; ADR-0006, ADR-0007, ADR-0009, ADR-0016, ADR-0030, ADR-0034, ADR-0040 – ADR-0048
-- **Plans:** [plan-01-backend.md](plan-01-backend.md), plan-02-player-ui.md and plan-03-stats-ui.md (not written yet)
+- **Related:** PRD US-7, US-8, US-9, US-10, US-11, US-11a, US-11b, US-14, US-15; R1, R2, R6, R10, R11, R12; ADR-0006, ADR-0007, ADR-0009, ADR-0016, ADR-0030, ADR-0034, ADR-0040 – ADR-0049
+- **Plans:** [plan-01-backend.md](plan-01-backend.md), [plan-02-player-ui.md](plan-02-player-ui.md), [plan-03-stats-ui.md](plan-03-stats-ui.md)
 
 ## 1. Intent
 
@@ -314,6 +314,7 @@ Plans 02 and 03 depend on 01 and are independent of each other.
 | [ADR-0046](../../adr/0046-recharts-through-shadcn-chart.md)                  | Add Recharts through the shadcn chart component                                                           |
 | [ADR-0047](../../adr/0047-desktop-first-no-screen-wake-lock.md)              | Treat the app as desktop-first: no screen wake lock during practice (tech-debt)                           |
 | [ADR-0048](../../adr/0048-aggregate-stats-on-read.md)                        | Aggregate stats on read from practice logs, without a snapshot table                                      |
+| [ADR-0049](../../adr/0049-allow-inner-html-in-vendored-shadcn-components.md) | Allow `dangerouslySetInnerHTML` in vendored shadcn components (stock `chart`)                             |
 
 ## 10. PRD tracking
 
@@ -349,3 +350,4 @@ When all plans are done, tick US-7, US-8, US-9, US-10, US-11, US-11a, US-11b, US
 ## Changelog
 
 - 2026-10-25 — `LocalDate` and `completedAt` must be 2000-01-01 or later (found in the plan-01 final review: year `0000` passed validation and failed in Postgres with a `500`). Earlier dates can only come from a broken client.
+- 2026-10-25 — ADR-0049 recorded during plan 03: the stock shadcn `chart` component sets inner HTML for its CSS variables, so the `components/ui/**` Biome override turns that rule off.

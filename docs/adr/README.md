@@ -65,3 +65,4 @@ This directory records significant decisions and deliberately accepted technical
 | [0046](0046-recharts-through-shadcn-chart.md)                              | Add Recharts through the shadcn chart component                                                 | decision  | accepted               |
 | [0047](0047-desktop-first-no-screen-wake-lock.md)                          | Treat the app as desktop-first, without a screen wake lock during practice                      | tech-debt | open                   |
 | [0048](0048-aggregate-stats-on-read.md)                                    | Aggregate stats on read from practice logs, without a snapshot table                            | decision  | accepted               |
+| [0049](0049-allow-inner-html-in-vendored-shadcn-components.md)             | Allow `dangerouslySetInnerHTML` in vendored shadcn components                                   | decision  | accepted               |

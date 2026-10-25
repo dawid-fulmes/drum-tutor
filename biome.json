@@ -39,7 +39,8 @@
             "useKeyWithClickEvents": "off",
             "noRedundantRoles": "off"
           },
-          "suspicious": { "noArrayIndexKey": "off" }
+          "suspicious": { "noArrayIndexKey": "off" },
+          "security": { "noDangerouslySetInnerHtml": "off" }
         }
       }
     }

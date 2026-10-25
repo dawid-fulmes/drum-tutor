@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/_app'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/_app/index'
+import { Route as AuthenticatedAppStatsRouteImport } from './routes/_authenticated/_app/stats'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAdminTagsRouteImport } from './routes/_authenticated/admin/tags'
 import { Route as AuthenticatedAppLessonsIndexRouteImport } from './routes/_authenticated/_app/lessons/index'
@@ -43,6 +44,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
 const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAppStatsRoute = AuthenticatedAppStatsRouteImport.update({
+  id: '/stats',
+  path: '/stats',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
@@ -90,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedAppIndexRoute
   '/login': typeof LoginRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/stats': typeof AuthenticatedAppStatsRoute
   '/admin/tags': typeof AuthenticatedAdminTagsRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/lessons/$lessonId': typeof AuthenticatedAppLessonsLessonIdRoute
@@ -101,6 +108,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof AuthenticatedAppIndexRoute
   '/login': typeof LoginRoute
+  '/stats': typeof AuthenticatedAppStatsRoute
   '/admin/tags': typeof AuthenticatedAdminTagsRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/lessons/$lessonId': typeof AuthenticatedAppLessonsLessonIdRoute
@@ -115,6 +123,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_authenticated/_app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/_authenticated/_app/stats': typeof AuthenticatedAppStatsRoute
   '/_authenticated/admin/tags': typeof AuthenticatedAdminTagsRoute
   '/_authenticated/_app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
@@ -130,6 +139,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/admin'
+    | '/stats'
     | '/admin/tags'
     | '/admin/'
     | '/lessons/$lessonId'
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/stats'
     | '/admin/tags'
     | '/admin'
     | '/lessons/$lessonId'
@@ -154,6 +165,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_authenticated/_app'
     | '/_authenticated/admin'
+    | '/_authenticated/_app/stats'
     | '/_authenticated/admin/tags'
     | '/_authenticated/_app/'
     | '/_authenticated/admin/'
@@ -204,6 +216,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/_app/stats': {
+      id: '/_authenticated/_app/stats'
+      path: '/stats'
+      fullPath: '/stats'
+      preLoaderRoute: typeof AuthenticatedAppStatsRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/admin/': {
@@ -259,12 +278,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAppRouteChildren {
+  AuthenticatedAppStatsRoute: typeof AuthenticatedAppStatsRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
   AuthenticatedAppLessonsLessonIdRoute: typeof AuthenticatedAppLessonsLessonIdRoute
   AuthenticatedAppLessonsIndexRoute: typeof AuthenticatedAppLessonsIndexRoute
 }
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
+  AuthenticatedAppStatsRoute: AuthenticatedAppStatsRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
   AuthenticatedAppLessonsLessonIdRoute: AuthenticatedAppLessonsLessonIdRoute,
   AuthenticatedAppLessonsIndexRoute: AuthenticatedAppLessonsIndexRoute,

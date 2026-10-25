@@ -165,6 +165,22 @@ Accented clicks are 1500 Hz, the others 1000 Hz. To fake a hidden page, run `Obj
 11. Rejected save: in the retry state, set the lesson to draft with `docker compose exec -T postgres psql -U drum -d drum_tutor -c "update lessons set status = 'draft' where id = '<id>'"`, unroute and click "Retry now". Expect 404 and "Your session couldn't be saved: This lesson is no longer available.". Set it back to `published`.
 12. Lost session while saving: in the retry state, `page.context().clearCookies()`, unroute and click "Retry now". Expect a 401 and a redirect to `/login` without the leave dialog.
 
+## Stats flows (e2e)
+
+The stats screen is `/stats` (spec `practice-and-stats` §6.3). Seed first (`scripts/with-node.sh pnpm db:seed`) and log in as `seed@example.com`: the seed's 13 months of practice belong to that user. The chart is Recharts, so read values from the tooltip by hovering a bar (`page.mouse.move` over `.recharts-surface`).
+
+1. The header shows "Stats". `/stats` writes `period=week&date=<today>` into the URL and shows "Select a tag to see your stats". There is no `/api/stats` request.
+2. Pick "Groove" in "Select a tag". Expect `tagId` in the URL, one `GET /api/stats/daily` for Monday–Sunday of the current week, bars labelled Mon…Sun, no bars after today, and a tooltip like "Fri, Oct 23 · 23 min".
+3. "Month" makes one daily call for the calendar month, labelled e.g. "October 2026". "Year" makes one weekly call for 1 Jan – 31 Dec, shows month ticks Jan…Dec, weekly bars up to the current week, and a tooltip like "Apr 27 – May 3 · 33 min".
+4. Paging: "Previous period" in Year shows last year, with data from about 13 months ago. "Next period" is disabled on the current period. `?period=week&date=2027-01-01` is labelled "Dec 28, 2026 – Jan 3, 2027". From `?period=month&date=2026-01-31`, "Next period" shows February 2026.
+5. URL state: reload keeps tag, period and date, and back/forward restore them. Switching from Month to Week keeps the date (the week containing it).
+6. Garbage URL: `/stats?period=decade&date=2026-02-30&tagId=x` shows the current week without a tag.
+7. Deleted tag: create a tag (`POST /api/admin/tags`), open Stats with it (all zeros), delete it, then reload. `tagId` leaves the URL (replace, so one Back leaves Stats) and the empty state shows.
+8. Fresh practice: note today's minutes for a tag, complete a 0:30 session on a lesson with that tag, then go back to Stats with the browser Back (the header link opens Stats without a tag, so you would have to pick it again). Today's bar is 0.5 min higher without a manual reload (the save invalidates the stats queries).
+9. Loading and error: delay `**/api/stats/**` by 2 s with `page.route` and expect a chart-sized skeleton; abort it and expect "Could not load data" with "Try again", which recovers once the route is removed.
+
+After adding a dependency, restart the dev server (`scripts/dev-stop.sh`, `scripts/dev-start.sh`). Otherwise Vite re-optimizes deps on the first import and the open page briefly logs "Invalid hook call".
+
 ## Troubleshooting (`dev-start.sh` messages)
 
 | Message                                                   | Meaning / what to do                                                                                                                                                                          |

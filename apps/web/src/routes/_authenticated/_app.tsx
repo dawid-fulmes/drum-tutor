@@ -20,6 +20,9 @@ function DrummerShell() {
             <Link to="/lessons" className="text-muted-foreground [&.active]:text-foreground">
               Library
             </Link>
+            <Link to="/stats" className="text-muted-foreground [&.active]:text-foreground">
+              Stats
+            </Link>
           </nav>
           <span className="text-sm text-muted-foreground">{user.email}</span>
           <Button

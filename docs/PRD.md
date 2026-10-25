@@ -105,7 +105,7 @@ Created only when an exercise runs to the end. Contains:
 
 ## 5. User stories
 
-A checked story is implemented and verified end to end. The scope that delivered it is listed in [docs/specs/](specs/README.md) (US-1: `project-foundation`; US-3, US-4, US-16, US-17a, US-18, US-19: `lessons-and-tags`).
+A checked story is implemented and verified end to end. The scope that delivered it is listed in [docs/specs/](specs/README.md) (US-1: `project-foundation`; US-3, US-4, US-16, US-17a, US-18, US-19: `lessons-and-tags`; US-7, US-8, US-9, US-10, US-11, US-11a, US-11b, US-14, US-15: `practice-and-stats`).
 
 ### 5.1 Identification
 
@@ -121,16 +121,16 @@ A checked story is implemented and verified end to end. The scope that delivered
 ### 5.3 Lesson start screen
 
 - [ ] **US-6** As a drummer, I open a lesson and see its name, description, difficulty, tags, rating and the signature rendered from its configuration.
-- [ ] **US-7** As a drummer, before starting, I can change the tempo and the duration (pre-filled with the recommended values, within the allowed ranges).
+- [x] **US-7** As a drummer, before starting, I can change the tempo and the duration (pre-filled with the recommended values, within the allowed ranges).
 
 ### 5.4 Practice session
 
-- [ ] **US-8** As a drummer, I press play and hear **4 count-in clicks** at the chosen tempo; the count-in does not count toward the exercise duration.
-- [ ] **US-9** During the exercise I hear a metronome click on **every quarter note**, with an **accent on beat 1**, and see a timer counting the chosen duration.
-- [ ] **US-10** I can **stop** the exercise at any time. A stopped exercise is not completed and **nothing is logged**. There is no pause.
-- [ ] **US-11** When the timer reaches the end, the exercise ends automatically, counts as **completed**, and a practice log is saved (lesson, duration in seconds, tempo, completion timestamp).
-- [ ] **US-11a** If the session is interrupted in a way that stops the metronome (the user leaves the app / tab, the screen locks, the app is closed), it is treated as **stopped** and nothing is logged. _(Claude's call.)_
-- [ ] **US-11b** If saving the log of a completed exercise fails (e.g. no connection), the user is told and the save is retried until it succeeds, without creating duplicate logs. _(Claude's call.)_
+- [x] **US-8** As a drummer, I press play and hear **4 count-in clicks** at the chosen tempo; the count-in does not count toward the exercise duration.
+- [x] **US-9** During the exercise I hear a metronome click on **every quarter note**, with an **accent on beat 1**, and see a timer counting the chosen duration.
+- [x] **US-10** I can **stop** the exercise at any time. A stopped exercise is not completed and **nothing is logged**. There is no pause.
+- [x] **US-11** When the timer reaches the end, the exercise ends automatically, counts as **completed**, and a practice log is saved (lesson, duration in seconds, tempo, completion timestamp).
+- [x] **US-11a** If the session is interrupted in a way that stops the metronome (the user leaves the app / tab, the screen locks, the app is closed), it is treated as **stopped** and nothing is logged. _(Claude's call.)_
+- [x] **US-11b** If saving the log of a completed exercise fails (e.g. no connection), the user is told and the save is retried until it succeeds, without creating duplicate logs. _(Claude's call.)_
 
 ### 5.5 Rating
 
@@ -139,12 +139,13 @@ A checked story is implemented and verified end to end. The scope that delivered
 
 ### 5.6 Statistics
 
-- [ ] **US-14** As a drummer, I pick a **tag** and a **period** (week, month or year) and see a chart of **minutes practiced per day** for that tag in that period.
-- [ ] **US-15** I can page to the previous / next period to follow my progress over consecutive weeks, months or years.
+- [x] **US-14** As a drummer, I pick a **tag** and a **period** (week, month or year) and see a chart of **minutes practiced per day** for that tag in that period.
+- [x] **US-15** I can page to the previous / next period to follow my progress over consecutive weeks, months or years.
 - Rules:
   - A practice log counts the **full duration** toward **every** tag of its lesson (so the sum over tags may exceed the real total practice time — this is intended).
   - Days without practice show 0.
   - Day boundaries follow the **user's local time at the moment of completion** (a session finished at 23:30 belongs to that day), and the assigned day never changes afterwards, even if the user later views statistics in another time zone. _(Claude's call.)_
+  - The year view shows weekly totals (Monday–Sunday weeks clipped to the year) instead of 365 daily bars, see ADR-0041.
 
 ### 5.7 Admin panel (`/admin`)
 
