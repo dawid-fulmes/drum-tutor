@@ -205,6 +205,18 @@ describe("admin lesson endpoints", () => {
       expect(await tagIdsOf(lesson.id)).toEqual([snare.id]);
     });
 
+    it.each([
+      ["tempo above 300", { recommendedTempoBpm: 301 }],
+      ["duration not a 30-second step", { recommendedDurationSeconds: 45 }],
+    ])("rejects %s and leaves the lesson unchanged", async (_label, override) => {
+      const lesson = await insertLesson(ctx.db, { tagIds: [groove.id] });
+      const before = (await read(lesson.id)).json();
+      const res = await update(lesson.id, input(override));
+      expect(res.statusCode).toBe(400);
+      expect(errorOf(res).code).toBe("VALIDATION_ERROR");
+      expect((await read(lesson.id)).json()).toEqual(before);
+    });
+
     it("updates a draft without changing its status", async () => {
       const lesson = await insertLesson(ctx.db, { tagIds: [groove.id] });
       const res = await update(lesson.id, input({ name: "Renamed" }));
@@ -304,11 +316,41 @@ describe("admin lesson endpoints", () => {
   });
 
   describe("lifecycle", () => {
+    const library = () => ctx.app.inject({ method: "GET", url: ApiPaths.lessons, cookies });
+    const libraryDetail = (id: string) =>
+      ctx.app.inject({ method: "GET", url: withId(ApiPaths.lesson, id), cookies });
+    const idsOf = (res: { json(): unknown }) =>
+      (res.json() as { items: { id: string }[] }).items.map((i) => i.id);
+
     it("unpublishes a published lesson without logs back to draft", async () => {
       const lesson = await insertLesson(ctx.db, { tagIds: [groove.id], status: "published" });
       const res = await unpublish(lesson.id);
       expect(res.statusCode).toBe(200);
       expect(AdminLessonSchema.parse(res.json())).toMatchObject({ status: "draft", locked: false });
+    });
+
+    it("shows a published lesson in the library and hides it again once unpublished", async () => {
+      const lesson = await insertLesson(ctx.db, { tagIds: [groove.id] });
+
+      expect((await publish(lesson.id)).statusCode).toBe(200);
+      expect(idsOf(await library())).toEqual([lesson.id]);
+      expect((await libraryDetail(lesson.id)).statusCode).toBe(200);
+
+      expect((await unpublish(lesson.id)).statusCode).toBe(200);
+      expect(idsOf(await library())).toEqual([]);
+      const hidden = await libraryDetail(lesson.id);
+      expect(hidden.statusCode).toBe(404);
+      expect(errorOf(hidden).message).toBe("Lesson not found");
+    });
+
+    it("returns a draft with practice logs unchanged on unpublish", async () => {
+      const lesson = await insertLesson(ctx.db, { tagIds: [groove.id] });
+      await insertPracticeLog(ctx.db, lesson.id);
+      const before = AdminLessonSchema.parse((await read(lesson.id)).json());
+      const res = await unpublish(lesson.id);
+      expect(res.statusCode).toBe(200);
+      expect(AdminLessonSchema.parse(res.json())).toEqual(before);
+      expect(before.status).toBe("draft");
     });
 
     it("publishes idempotently and treats unpublishing a draft as a no-op", async () => {

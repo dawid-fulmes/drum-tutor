@@ -48,6 +48,7 @@ describe("drummer library endpoints", () => {
     await published({ name: "Live", tagIds: [a.id] });
     const draft = await insertLesson(ctx.db, { name: "Draft", tagIds: [a.id] });
     expect(await names()).toEqual(["Live"]);
+    expect((await listPage()).totalItems).toBe(1);
     const res = await ctx.app.inject({
       method: "GET",
       url: withId(ApiPaths.lesson, draft.id),

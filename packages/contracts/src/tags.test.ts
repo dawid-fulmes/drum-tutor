@@ -26,4 +26,13 @@ describe("TagListQuerySchema", () => {
   it("defaults pagination and ids", () => {
     expect(TagListQuerySchema.parse({})).toEqual({ page: 1, pageSize: 20, ids: [] });
   });
+
+  it("trims q and collapses inner whitespace", () => {
+    expect(TagListQuerySchema.parse({ q: "  weak   \t hand " }).q).toBe("weak hand");
+  });
+
+  it("keeps a blank q empty and rejects q longer than 50 chars", () => {
+    expect(TagListQuerySchema.parse({ q: "   " }).q).toBe("");
+    expect(TagListQuerySchema.safeParse({ q: "a".repeat(51) }).success).toBe(false);
+  });
 });

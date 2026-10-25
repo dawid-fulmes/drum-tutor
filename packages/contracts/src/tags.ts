@@ -18,7 +18,12 @@ export const AdminTagSchema = TagSchema.extend({ lessonCount: z.number().int().m
 export type AdminTag = z.infer<typeof AdminTagSchema>;
 
 export const TagListQuerySchema = PaginationQuerySchema.extend({
-  q: z.string().trim().max(50).optional(),
+  q: z
+    .string()
+    .trim()
+    .transform((value) => value.replace(/\s+/g, " "))
+    .pipe(z.string().max(50))
+    .optional(),
   ids: queryArray(z.uuid(), 100),
 });
 export type TagListQuery = z.output<typeof TagListQuerySchema>;

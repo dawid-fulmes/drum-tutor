@@ -394,3 +394,10 @@ When all plans are done, tick US-3, US-4, US-16, US-17a, US-18 and US-19 in the 
 - A `401` anywhere in the new screens redirects to `/login`, following the foundation's `_authenticated` behaviour.
 - Duplicate ids are ignored in query-string arrays (filters) but rejected in `LessonInput.tagIds`, where they signal a client bug.
 - Changing the page size resets to page 1.
+
+## Changelog
+
+- 2026-10-25 — Execution decisions recorded after the backend review:
+  - `ON DELETE RESTRICT` raises SQLSTATE 23001 (`restrict_violation`), not 23503, so the tag-delete and lesson-delete backstops map both 23001 and 23503 to their 409 errors.
+  - `PUT /api/admin/lessons/:id` error precedence is 404 (unknown lesson) → 409 `LESSON_LOCKED` → 400 (unknown tag).
+  - Unpublishing a lesson that is already a draft returns 200 with the lesson unchanged, without checking practice logs (a draft with logs is no longer rejected).

@@ -177,8 +177,7 @@ const LESSONS: SeedLesson[] = [
   },
   {
     name: "Half-time shuffle",
-    description:
-      "Draft: a half-time shuffle with ghost notes on the snare. Needs a recommended tempo review.",
+    description: "A half-time shuffle with ghost notes on the snare, played at a relaxed tempo.",
     difficulty: "advanced",
     tempo: 70,
     minutes: 8,
@@ -187,8 +186,7 @@ const LESSONS: SeedLesson[] = [
   },
   {
     name: "Left foot clave on hi-hat",
-    description:
-      "Draft: play a 3-2 clave with the hi-hat foot while the hands keep a basic rock beat.",
+    description: "Play a 3-2 clave with the hi-hat foot while the hands keep a basic rock beat.",
     difficulty: "advanced",
     tempo: 80,
     minutes: 6,
@@ -198,7 +196,7 @@ const LESSONS: SeedLesson[] = [
   {
     name: "Alternating single strokes warm-up",
     description:
-      "Draft: a short warm-up of single strokes at three tempos to start every practice session.",
+      "A short warm-up of single strokes at three tempos to start every practice session.",
     difficulty: "beginner",
     tempo: 60,
     minutes: 2,

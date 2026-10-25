@@ -211,7 +211,19 @@ export async function publishLesson(db: Database, id: string): Promise<AdminLess
 /** Unpublishing a draft is a no-op; a lesson with practice logs cannot be unpublished. */
 export async function unpublishLesson(db: Database, id: string): Promise<AdminLesson> {
   return db.transaction(async (tx) => {
-    await lockUnloggedLesson(tx, id);
+    const [row] = await tx
+      .select({ status: lessons.status })
+      .from(lessons)
+      .where(eq(lessons.id, id))
+      .for("update");
+    if (!row) throw notFound();
+    if (row.status === "draft") return loadAdminLesson(tx, id);
+    const [log] = await tx
+      .select({ id: practiceLogs.id })
+      .from(practiceLogs)
+      .where(eq(practiceLogs.lessonId, id))
+      .limit(1);
+    if (log) throw lessonLocked();
     await tx.update(lessons).set({ status: "draft" }).where(eq(lessons.id, id));
     return loadAdminLesson(tx, id);
   });

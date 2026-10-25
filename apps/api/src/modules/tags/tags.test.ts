@@ -46,6 +46,13 @@ describe("GET /api/tags", () => {
     expect(body.items.map((t) => t.name)).toEqual(["Hand speed", "Weak hand"]);
   });
 
+  it("collapses inner whitespace in q like tag names", async () => {
+    await insertTag(ctx.db, "Weak hand");
+    await insertTag(ctx.db, "Groove");
+    const body = TagPageSchema.parse((await get("?q=weak%20%20hand")).json());
+    expect(body.items.map((t) => t.name)).toEqual(["Weak hand"]);
+  });
+
   it("treats %, _ and \\ in q literally", async () => {
     await insertTag(ctx.db, "100% wrist");
     await insertTag(ctx.db, "left_hand");

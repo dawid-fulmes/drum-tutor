@@ -16,4 +16,5 @@ export const ApiPaths = {
 } as const;
 
 /** Replaces the `:id` segment of a path template. */
-export const withId = (path: string, id: string): string => path.replace(":id", id);
+export const withId = (path: string, id: string): string =>
+  path.replace(":id", () => encodeURIComponent(id));
