@@ -12,6 +12,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tansta
 import { toast } from "sonner";
 import { ApiClientError, apiRequest } from "@/lib/api-client";
 import { nextPageParam } from "@/lib/infinite";
+import { lessonKeys } from "../lessons/lesson-keys";
 
 const PICKER_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
@@ -19,8 +20,10 @@ const MAX_PAGE_SIZE = 100;
 export const tagKeys = {
   all: ["tags"] as const,
   search: (q: string) => [...tagKeys.all, "search", q] as const,
-  byIds: (ids: readonly string[]) => [...tagKeys.all, "by-ids", ids] as const,
-  admin: (q: string) => [...tagKeys.all, "admin", q] as const,
+  // Sorted so a reordered selection reuses the cache entry.
+  byIds: (ids: readonly string[]) => [...tagKeys.all, "by-ids", [...ids].sort()] as const,
+  adminAll: ["tags", "admin"] as const,
+  admin: (q: string) => [...tagKeys.adminAll, q] as const,
 };
 
 export const TagPageSchema = pageSchema(TagSchema);
@@ -98,7 +101,11 @@ export function useRenameTag() {
     meta: NAME_TAKEN_INLINE,
     onSuccess: async () => {
       toast.success("Tag renamed");
-      await queryClient.invalidateQueries({ queryKey: tagKeys.all });
+      // Lesson payloads embed tag names.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: tagKeys.all }),
+        queryClient.invalidateQueries({ queryKey: lessonKeys.all }),
+      ]);
     },
   });
 }
@@ -112,6 +119,8 @@ export function useDeleteTag() {
       toast.success("Tag deleted");
       await queryClient.invalidateQueries({ queryKey: tagKeys.all });
     },
+    // e.g. 409 TAG_IN_USE: refresh the row's lessonCount and Delete state.
+    onError: () => queryClient.invalidateQueries({ queryKey: tagKeys.adminAll }),
   });
 }
 

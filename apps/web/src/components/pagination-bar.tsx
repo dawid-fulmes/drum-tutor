@@ -1,3 +1,4 @@
+import { useId } from "react";
 import {
   Pagination,
   PaginationContent,
@@ -33,6 +34,7 @@ export function PaginationBar({
   onPageChange,
   onPageSizeChange,
 }: PaginationBarProps) {
+  const labelId = useId();
   const go = (target: number) => (event: React.MouseEvent) => {
     event.preventDefault();
     onPageChange(target);
@@ -81,9 +83,9 @@ export function PaginationBar({
         <span />
       )}
       <div className="flex items-center gap-2 text-sm">
-        <span id="page-size-label">Per page</span>
+        <span id={labelId}>Per page</span>
         <Select value={String(pageSize)} onValueChange={(value) => onPageSizeChange(Number(value))}>
-          <SelectTrigger size="sm" aria-labelledby="page-size-label">
+          <SelectTrigger size="sm" aria-labelledby={labelId}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

@@ -401,3 +401,10 @@ When all plans are done, tick US-3, US-4, US-16, US-17a, US-18 and US-19 in the 
   - `ON DELETE RESTRICT` raises SQLSTATE 23001 (`restrict_violation`), not 23503, so the tag-delete and lesson-delete backstops map both 23001 and 23503 to their 409 errors.
   - `PUT /api/admin/lessons/:id` error precedence is 404 (unknown lesson) → 409 `LESSON_LOCKED` → 400 (unknown tag).
   - Unpublishing a lesson that is already a draft returns 200 with the lesson unchanged, without checking practice logs (a draft with logs is no longer rejected).
+- 2026-10-25 — Admin UI decisions recorded after the whole-branch review:
+  - The admin lesson list shows 5 skeleton rows while loading (not one per page slot); the library keeps one skeleton per page slot.
+  - A malformed `lessonId` (API 400) and an unknown one (404) both show "Lesson not found".
+  - Search-param schemas use `.default().catch()`, so defaults appear in the URL and invalid values fall back to them.
+  - `pageItems` lists every page when `totalPages` ≤ 5.
+  - A Biome override relaxes lint rules for vendored shadcn files (ADR-0037).
+  - Knowingly left admin UI gaps are tracked in ADR-0038.

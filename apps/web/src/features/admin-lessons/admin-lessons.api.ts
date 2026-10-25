@@ -9,16 +9,9 @@ import {
 import { queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiRequest } from "@/lib/api-client";
+import { lessonKeys } from "../lessons/lesson-keys";
+import { tagKeys } from "../tags/tags.api";
 import type { AdminLessonsSearch } from "./admin-lessons-search";
-
-/** `all` is the shared root: admin mutations invalidate library data too (plan 03 adds `library`). */
-export const lessonKeys = {
-  all: ["lessons"] as const,
-  admin: {
-    list: (search: AdminLessonsSearch) => [...lessonKeys.all, "admin", "list", search] as const,
-    detail: (id: string) => [...lessonKeys.all, "admin", "detail", id] as const,
-  },
-};
 
 export const AdminLessonPageSchema = pageSchema(AdminLessonSummarySchema);
 
@@ -47,7 +40,11 @@ function useInvalidatingMutation<TVariables>(
     mutationFn,
     onSuccess: async () => {
       toast.success(successMessage);
-      await queryClient.invalidateQueries({ queryKey: lessonKeys.all });
+      // Tags embed `lessonCount`, which every lesson mutation can change.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: lessonKeys.all }),
+        queryClient.invalidateQueries({ queryKey: tagKeys.all }),
+      ]);
     },
   });
 }

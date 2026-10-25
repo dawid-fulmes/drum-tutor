@@ -54,7 +54,12 @@ export function TagPicker({ value, onChange, disabled, invalid }: TagPickerProps
       </PopoverTrigger>
       <PopoverContent className="w-72 p-0" align="start">
         <Command shouldFilter={false}>
-          <CommandInput placeholder="Search tags" value={input} onValueChange={setInput} />
+          <CommandInput
+            placeholder="Search tags"
+            maxLength={50}
+            value={input}
+            onValueChange={setInput}
+          />
           <CommandList ref={setList} aria-multiselectable>
             {search.isPending ? (
               <div className="flex flex-col gap-2 p-2">
@@ -92,7 +97,9 @@ export function TagPicker({ value, onChange, disabled, invalid }: TagPickerProps
                 </CommandGroup>
                 <LoadMoreSentinel
                   root={list}
-                  enabled={search.hasNextPage && !search.isFetchingNextPage}
+                  enabled={
+                    search.hasNextPage && !search.isFetchingNextPage && !search.isFetchNextPageError
+                  }
                   onLoadMore={() => search.fetchNextPage()}
                 />
               </>

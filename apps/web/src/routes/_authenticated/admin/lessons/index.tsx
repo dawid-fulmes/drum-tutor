@@ -32,15 +32,10 @@ function AdminLessonsPage() {
   const totalPages = lessons.data?.totalPages ?? 0;
 
   useEffect(() => {
-    if (
-      lessons.isSuccess &&
-      !lessons.isPlaceholderData &&
-      totalPages > 0 &&
-      search.page > totalPages
-    ) {
+    if (lessons.isSuccess && totalPages > 0 && search.page > totalPages) {
       void navigate({ search: (prev) => ({ ...prev, page: totalPages }), replace: true });
     }
-  }, [lessons.isSuccess, lessons.isPlaceholderData, totalPages, search.page, navigate]);
+  }, [lessons.isSuccess, totalPages, search.page, navigate]);
 
   return (
     <div className="grid gap-6">

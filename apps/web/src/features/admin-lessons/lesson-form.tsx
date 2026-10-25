@@ -57,6 +57,20 @@ const clearStaleErrors = {
     })),
 };
 
+/**
+ * Tempo keeps its blur/submit error until the typed value is valid; an `onChange` validator would
+ * flash an error while typing "120" ("1", "12" are out of range).
+ */
+const clearTempoErrorWhenValid = {
+  onChange: ({ value, fieldApi }: { value: unknown; fieldApi: AnyFieldApi }) => {
+    if (!shape.recommendedTempoBpm.safeParse(value).success) return;
+    fieldApi.setMeta((meta) => ({
+      ...meta,
+      errorMap: { ...meta.errorMap, onBlur: undefined, onSubmit: undefined },
+    }));
+  },
+};
+
 export function LessonForm({
   defaultValues,
   disabled,
@@ -187,7 +201,7 @@ export function LessonForm({
       <form.Field
         name="recommendedTempoBpm"
         validators={{ onBlur: shape.recommendedTempoBpm }}
-        listeners={clearStaleErrors}
+        listeners={clearTempoErrorWhenValid}
       >
         {(field) => <TempoField field={field} disabled={locked} />}
       </form.Field>

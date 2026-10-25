@@ -9,6 +9,9 @@ type QueryErrorProps = {
 };
 
 export function QueryError({ error, onRetry }: QueryErrorProps) {
+  // The redirect to /login is already in progress (spec §6.2): no inline error.
+  if (error instanceof ApiClientError && error.status === 401) return null;
+
   const message =
     error instanceof ApiClientError && error.message ? error.message : "Something went wrong";
 

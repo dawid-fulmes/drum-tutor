@@ -69,6 +69,7 @@ function EditLesson({ id }: { id: string }) {
         </Alert>
       ) : null}
       <LessonForm
+        key={String(data.locked)}
         defaultValues={{
           name: data.name,
           description: data.description,

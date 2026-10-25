@@ -34,6 +34,7 @@ export function AdminTagsPage() {
         aria-label="Search tags"
         placeholder="Search tags"
         className="max-w-sm"
+        maxLength={50}
         value={input}
         onChange={(event) => setInput(event.target.value)}
       />
@@ -76,7 +77,7 @@ export function AdminTagsPage() {
             </TableBody>
           </Table>
           <LoadMoreSentinel
-            enabled={tags.hasNextPage && !tags.isFetchingNextPage}
+            enabled={tags.hasNextPage && !tags.isFetchingNextPage && !tags.isFetchNextPageError}
             onLoadMore={() => tags.fetchNextPage()}
           />
         </>
