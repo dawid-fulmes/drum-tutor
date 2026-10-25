@@ -1,10 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
+import { LessonDetails, LessonNotFound } from "@/features/lessons/lesson-details";
 
 export const Route = createFileRoute("/_authenticated/_app/lessons/$lessonId")({
-  component: LessonDetailsPlaceholder,
+  component: LessonDetailsPage,
 });
 
-// Placeholder: replaced by the lesson details screen in Task 3.
-function LessonDetailsPlaceholder() {
-  return <h1 className="text-2xl font-semibold">Lesson</h1>;
+function LessonDetailsPage() {
+  const { lessonId } = Route.useParams();
+  // The API answers 400 for a malformed id; skip the request and show "not found" right away.
+  if (!z.uuid().safeParse(lessonId).success) return <LessonNotFound />;
+  return <LessonDetails id={lessonId} />;
 }
