@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AdminTagsPage } from "@/features/admin-tags/admin-tags-page";
 
 export const Route = createFileRoute("/_authenticated/admin/tags")({
-  component: () => <h1 className="text-xl font-semibold">Tags</h1>,
+  component: AdminTagsPage,
 });
