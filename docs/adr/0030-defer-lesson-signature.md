@@ -1,7 +1,7 @@
 # ADR-0030: Create and publish lessons without a signature until the signature scope
 
 - **Type:** tech-debt
-- **Status:** open
+- **Status:** superseded by ADR-0040
 - **Date:** 2026-10-25
 - **Related:** PRD §4.1, §4.2, US-6, US-17; ADR-0005, ADR-0008; specs/lessons-and-tags
 
