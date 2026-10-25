@@ -16,7 +16,28 @@ export class ApiClientError extends Error {
   }
 }
 
-type RequestOptions = { method?: "GET" | "POST"; body?: unknown };
+export type QueryParams = Record<string, string | number | readonly string[] | undefined>;
+
+type RequestOptions = {
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  query?: QueryParams;
+  body?: unknown;
+};
+
+/** Appends query params: arrays become repeated keys; undefined, "" and empty arrays are omitted. */
+export function buildUrl(path: string, query?: QueryParams): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query ?? {})) {
+    if (value === undefined || value === "") continue;
+    if (typeof value === "object") {
+      for (const item of value) params.append(key, item);
+    } else {
+      params.append(key, String(value));
+    }
+  }
+  const search = params.toString();
+  return search === "" ? path : `${path}?${search}`;
+}
 
 /**
  * Thin typed fetch wrapper (ADR-0025). Success bodies are parsed with the contract schema;
@@ -32,11 +53,11 @@ export async function apiRequest(
 ): Promise<void>;
 export async function apiRequest<T>(
   path: string,
-  { method = "GET", body, schema }: RequestOptions & { schema: z.ZodType<T> | null },
+  { method = "GET", query, body, schema }: RequestOptions & { schema: z.ZodType<T> | null },
 ): Promise<T | undefined> {
   let response: Response;
   try {
-    response = await fetch(path, {
+    response = await fetch(buildUrl(path, query), {
       method,
       credentials: "include",
       headers: body === undefined ? undefined : { "content-type": "application/json" },
