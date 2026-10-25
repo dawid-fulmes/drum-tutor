@@ -8,7 +8,11 @@ vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
 
 const unauthenticated = () => new ApiClientError(401, "UNAUTHENTICATED", "Not logged in");
 
-function runMutation(client: QueryClient, error: unknown, meta?: { suppressErrorToast: boolean }) {
+function runMutation(
+  client: QueryClient,
+  error: unknown,
+  meta?: { suppressErrorToast?: boolean; suppressErrorCodes?: string[] },
+) {
   const mutation = client.getMutationCache().build(client, {
     mutationFn: async () => {
       throw error;
@@ -55,6 +59,20 @@ describe("createQueryClient", () => {
     });
     expect(toast.error).not.toHaveBeenCalled();
     await runMutation(client, unauthenticated(), { suppressErrorToast: true });
+    expect(onUnauthenticated).toHaveBeenCalledTimes(1);
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it("suppressErrorCodes skips the toast only for listed codes", async () => {
+    const meta = { suppressErrorCodes: ["TAG_NAME_TAKEN"] };
+    await runMutation(client, new ApiClientError(409, "TAG_NAME_TAKEN", "taken"), meta);
+    expect(toast.error).not.toHaveBeenCalled();
+    await runMutation(client, new ApiClientError(500, "INTERNAL", "Boom"), meta);
+    expect(toast.error).toHaveBeenCalledWith("Boom");
+  });
+
+  it("401 with suppressErrorCodes redirects and does not toast", async () => {
+    await runMutation(client, unauthenticated(), { suppressErrorCodes: ["TAG_NAME_TAKEN"] });
     expect(onUnauthenticated).toHaveBeenCalledTimes(1);
     expect(toast.error).not.toHaveBeenCalled();
   });

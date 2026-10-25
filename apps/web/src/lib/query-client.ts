@@ -4,7 +4,7 @@ import { ApiClientError } from "./api-client";
 
 declare module "@tanstack/react-query" {
   interface Register {
-    mutationMeta: { suppressErrorToast?: boolean };
+    mutationMeta: { suppressErrorToast?: boolean; suppressErrorCodes?: string[] };
   }
 }
 
@@ -16,6 +16,7 @@ const isUnauthenticated = (error: unknown) =>
 
 /**
  * Failed mutations toast globally (ADR-0021); query errors are handled where they are used.
+ * `meta.suppressErrorCodes` skips the toast for listed API error codes (the caller shows them inline).
  * A 401 (session lost) never toasts: it calls `onUnauthenticated`, before `suppressErrorToast` applies.
  */
 export function createQueryClient({
@@ -36,6 +37,12 @@ export function createQueryClient({
           return;
         }
         if (mutation.meta?.suppressErrorToast) return;
+        if (
+          error instanceof ApiClientError &&
+          mutation.meta?.suppressErrorCodes?.includes(error.code)
+        ) {
+          return;
+        }
         toast.error(error instanceof ApiClientError ? error.message : "Something went wrong");
       },
     }),

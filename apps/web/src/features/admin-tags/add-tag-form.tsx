@@ -1,4 +1,4 @@
-import { TagNameSchema } from "@drum-tutor/contracts";
+import { TagInputSchema, TagNameSchema } from "@drum-tutor/contracts";
 import { useForm } from "@tanstack/react-form";
 import { Loader2 } from "lucide-react";
 import { TextField } from "@/components/text-field";
@@ -11,7 +11,7 @@ export function AddTagForm() {
     defaultValues: { name: "" },
     onSubmit: async ({ value, formApi }) => {
       try {
-        await createTag.mutateAsync({ name: value.name });
+        await createTag.mutateAsync(TagInputSchema.parse(value));
         formApi.reset();
       } catch (error) {
         if (isTagNameTaken(error)) {

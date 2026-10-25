@@ -71,23 +71,18 @@ export function useAdminTags(q: string) {
   });
 }
 
-/** A duplicate name is shown under the input by the caller; every other error toasts. */
-function toastUnlessNameTaken(error: unknown) {
-  if (error instanceof ApiClientError && error.code === ApiErrorCode.TAG_NAME_TAKEN) return;
-  toast.error(error instanceof ApiClientError ? error.message : "Something went wrong");
-}
+const NAME_TAKEN_INLINE = { suppressErrorCodes: [ApiErrorCode.TAG_NAME_TAKEN] };
 
 export function useCreateTag() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body: TagInput) =>
       apiRequest(ApiPaths.adminTags, { method: "POST", body, schema: AdminTagSchema }),
-    meta: { suppressErrorToast: true },
+    meta: NAME_TAKEN_INLINE,
     onSuccess: async () => {
       toast.success("Tag added");
       await queryClient.invalidateQueries({ queryKey: tagKeys.all });
     },
-    onError: toastUnlessNameTaken,
   });
 }
 
@@ -100,12 +95,11 @@ export function useRenameTag() {
         body: { name },
         schema: AdminTagSchema,
       }),
-    meta: { suppressErrorToast: true },
+    meta: NAME_TAKEN_INLINE,
     onSuccess: async () => {
       toast.success("Tag renamed");
       await queryClient.invalidateQueries({ queryKey: tagKeys.all });
     },
-    onError: toastUnlessNameTaken,
   });
 }
 
