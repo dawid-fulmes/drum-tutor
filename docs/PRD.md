@@ -105,7 +105,7 @@ Created only when an exercise runs to the end. Contains:
 
 ## 5. User stories
 
-A checked story is implemented and verified end to end. The scope that delivered it is listed in [docs/specs/](specs/README.md) (US-1: `project-foundation`).
+A checked story is implemented and verified end to end. The scope that delivered it is listed in [docs/specs/](specs/README.md) (US-1: `project-foundation`; US-3, US-4, US-16, US-17a, US-18, US-19: `lessons-and-tags`).
 
 ### 5.1 Identification
 
@@ -114,8 +114,8 @@ A checked story is implemented and verified end to end. The scope that delivered
 ### 5.2 Library
 
 - [ ] **US-2** As a drummer, I browse the **paginated** list of lessons. Each item shows: name, difficulty, tags, average rating with rating count, recommended tempo and duration. Filters and sorting apply to the whole result set, not only the current page.
-- [ ] **US-3** As a drummer, I filter by tags. Selecting multiple tags **narrows** the results: a lesson must have **all** selected tags.
-- [ ] **US-4** As a drummer, I filter by difficulty. I can select one or more levels; a lesson matching **any** selected level is shown.
+- [x] **US-3** As a drummer, I filter by tags. Selecting multiple tags **narrows** the results: a lesson must have **all** selected tags.
+- [x] **US-4** As a drummer, I filter by difficulty. I can select one or more levels; a lesson matching **any** selected level is shown.
 - [ ] **US-5** As a drummer, I sort by creation date (newest / oldest) or by average rating. Lessons with no ratings go last when sorting by rating.
 
 ### 5.3 Lesson start screen
@@ -148,11 +148,11 @@ A checked story is implemented and verified end to end. The scope that delivered
 
 ### 5.7 Admin panel (`/admin`)
 
-- [ ] **US-16** As an admin, I manage the tag dictionary: add tags, rename tags (always allowed), delete tags (only when not assigned to any lesson). Tag names are unique.
+- [x] **US-16** As an admin, I manage the tag dictionary: add tags, rename tags (always allowed), delete tags (only when not assigned to any lesson). Tag names are unique.
 - [ ] **US-17** As an admin, I create a lesson with all properties from 4.1, including building the 8-slot signature (instruments + comment per slot). A new lesson starts as a **draft**, invisible to drummers, which I can freely edit or delete.
-- [ ] **US-17a** As an admin, I **publish** a draft to make it visible in the library. As long as nobody has completed the lesson yet, I can move it back to **draft**; once it has at least one practice log, it stays published.
-- [ ] **US-18** As an admin, I can edit or delete a lesson **only if no user has completed it yet**. Once at least one practice log exists, the lesson is locked (this keeps historical statistics stable).
-- [ ] **US-19** As an admin, I see the list of lessons with their status (draft / published) and can tell which ones are locked.
+- [x] **US-17a** As an admin, I **publish** a draft to make it visible in the library. As long as nobody has completed the lesson yet, I can move it back to **draft**; once it has at least one practice log, it stays published.
+- [x] **US-18** As an admin, I can edit or delete a lesson **only if no user has completed it yet**. Once at least one practice log exists, the lesson is locked (this keeps historical statistics stable).
+- [x] **US-19** As an admin, I see the list of lessons with their status (draft / published) and can tell which ones are locked.
 
 ## 6. Business rules summary
 

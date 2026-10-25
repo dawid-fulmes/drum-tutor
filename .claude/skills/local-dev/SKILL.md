@@ -77,7 +77,7 @@ A `401` from `/api/auth/me` in the browser console is expected whenever nobody i
 
 ## Admin flows (e2e)
 
-Every logged-in user is an admin for now. Seed first (`scripts/with-node.sh pnpm db:seed`) and log in with a fresh email. Admin screens live under `/admin` (`/admin/lessons`, `/admin/tags`); the drummer shell at `/` shows "Library coming soon." and links nowhere into admin, so type the URLs.
+Every logged-in user is an admin for now. Seed first (`scripts/with-node.sh pnpm db:seed`) and log in with a fresh email. Admin screens live under `/admin` (`/admin/lessons`, `/admin/tags`); the drummer shell links nowhere into admin, so type the URLs.
 
 Lessons list and form:
 
@@ -103,6 +103,28 @@ Tags:
 Session lost (run this last, it wipes data):
 
 16. With `/admin/lessons` open, run `scripts/with-node.sh pnpm db:reset`, then trigger any action or reload data (for example change the page size). Expect exactly one failed request (401), one redirect to `/login`, no error toast and no request loop (check `browser_network_requests`). Run `scripts/with-node.sh pnpm db:seed` and log in again before further checks.
+
+## Library flows (e2e)
+
+Seed first (`scripts/with-node.sh pnpm db:seed`: 6 tags, 15 published and 3 draft lessons) and log in with a fresh email. `/` redirects to `/lessons`. The router writes all search params into the URL, arrays as JSON (`tagIds=["<uuid>"]`), defaults included.
+
+1. Open `/lessons`. Expect `/lessons?page=1&pageSize=12&tagIds=[]&difficulties=[]&sort=newest`, heading "Library", the controls Tags, Beginner / Intermediate / Advanced, Sort ("Newest first"), the text "15 lessons", 12 cards (name, difficulty badge, tag badges, "<bpm> BPM · m:ss") and the pagination bar with "Per page 12". Drafts never show.
+2. Open the Tags picker, type `hand` in "Search tags". Expect "Hand speed" and "Weak hand". Pick "Weak hand", press Escape. Expect the button "Tags (1)", a chip for the tag, "4 lessons" and the id in `tagIds`. Several tags narrow the result (a lesson needs all of them).
+3. Toggle "Intermediate". Expect "2 lessons" and `difficulties=["intermediate"]`. Several levels widen the result (any of them). Choose "Oldest first" in Sort. Expect `sort=oldest` and a different first card. "Clear filters" appears while a tag or level is selected; clicking it empties both (sort stays).
+4. Back and forward. After steps 2 and 3, go back twice and forward once. Expect the controls (tag count, toggled levels, sort) and the cards to match the URL each time. Reload keeps the same state.
+5. Paging: click "Go to next page" on the unfiltered library. Expect `page=2` and 3 cards. Per page offers 12, 24, 48; choosing 24 gives `pageSize=24`, `page=1`, 15 cards and no pagination bar.
+6. Page clamping: open `/lessons?page=9`. Expect `page=2` (replaced, no extra history entry). On page 2 toggle a level. Expect `page=1`.
+7. Garbage URL: open `/lessons?page=abc&pageSize=7&difficulties=["expert"]&sort=best&tagIds=["x"]`. Expect the library with defaults in the URL, never an error page.
+8. Empty states: open `/lessons?page=3&tagIds=["<Rudiments id>","<Kick drum foot id>"]&difficulties=["beginner"]` (ids from `/api/tags` or psql). Expect "No lessons match these filters", "Try removing a tag or selecting more levels.", a "Clear filters" button, no redirect and no request loop; the button restores the full library. "No lessons yet" with "New lessons will show up here once they are published." shows on an empty database (see step 14).
+9. Skeletons: in `browser_run_code_unsafe` register `page.route('**/api/lessons**', async r => { await new Promise(res => setTimeout(res, 2000)); await r.continue(); })`, then toggle a level and snapshot during the delay. Expect skeleton cards (as many as the page size) and no count text. Remove the route with `page.unroute`.
+10. Deleted tag in the URL: pick a tag assigned to lessons, then with `docker compose exec postgres psql -U drum -d drum_tutor` run `delete from lesson_tags where tag_id = '<id>'` and `delete from tags where id = '<id>'`. Reload a URL that has this id plus another filter. Expect the dead id gone from the URL, results for the remaining filters, and one Back going to the previous page rather than to the dead-id URL. Re-seed afterwards.
+11. Details: click a card. Expect `/lessons/<uuid>` with "‹ Back to library", name, badges, "Recommended: <bpm> BPM · m:ss", description, "Sheet coming soon" and a disabled "Start" button. "Back to library" returns to the library with the filters, sort and page you came from, also after a reload of the details page.
+12. Not found: open `/lessons/abc`, a random uuid, and the id of a draft lesson (`select id from lessons where status = 'draft'`). Expect "Lesson not found" with "Back to library" each time, never the generic route error. The console shows the 400/404 resource errors.
+13. Rating and signature are not shown anywhere (ADR-0030, ADR-0031).
+
+Empty database (run this last, it wipes data):
+
+14. `scripts/dev-stop.sh`, `scripts/with-node.sh pnpm db:reset`, `scripts/dev-start.sh`, log in again (reset deletes users). Expect "0 lessons" and "No lessons yet". Run `scripts/with-node.sh pnpm db:seed` afterwards.
 
 ## Troubleshooting (`dev-start.sh` messages)
 
