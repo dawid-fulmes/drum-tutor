@@ -36,3 +36,13 @@ This directory records significant decisions and deliberately accepted technical
 | [0017](0017-biome-for-lint-and-format.md) | Use Biome for linting and formatting | decision | accepted |
 | [0018](0018-integration-tests-on-real-postgres.md) | Run API integration tests against real PostgreSQL via Testcontainers | decision | accepted |
 | [0019](0019-specs-and-plans-per-scope-in-docs-specs.md) | Keep specs and plans per scope in docs/specs, tracked in git | decision | accepted |
+| [0020](0020-tanstack-form-for-forms.md) | Use TanStack Form for forms, validated with contract Zod schemas | decision | accepted |
+| [0021](0021-global-mutation-error-toasts-with-sonner.md) | Show failed mutations as global toasts using Sonner | decision | accepted |
+| [0022](0022-uniform-api-error-shape.md) | Return one error response shape for every API error | decision | accepted |
+| [0023](0023-signed-cookie-session-without-session-store.md) | Keep the session in a signed cookie holding the user id, without a session store | tech-debt | open |
+| [0024](0024-normalize-emails-trim-lowercase.md) | Normalize emails by trimming and lowercasing | decision | accepted |
+| [0025](0025-thin-typed-fetch-client.md) | Use a thin typed fetch client instead of an HTTP library or generated client | decision | accepted |
+| [0026](0026-local-dev-postgres-in-docker-apps-on-host-with-agent-skill.md) | Run only PostgreSQL in Docker, the apps on the host, and give agents one repo skill to run them | decision | accepted |
+| [0027](0027-defer-committed-e2e-suite-use-playwright-plugin.md) | Defer a committed Playwright e2e suite; agents verify the UI through the Playwright plugin | tech-debt | open |
+| [0028](0028-fastify-zod-type-provider-and-swagger-for-openapi.md) | Use fastify-type-provider-zod with @fastify/swagger to validate routes and generate OpenAPI | decision | accepted |
+| [0029](0029-pnpm-supply-chain-policy-exceptions.md) | Accept pnpm 12 supply-chain policy exceptions for pinned fresh releases and build scripts | tech-debt | open |

@@ -1,0 +1,4 @@
+{
+  "extends": "@drum-tutor/config/tsconfig.node.json",
+  "include": ["src", "test", "vitest.config.ts"]
+}

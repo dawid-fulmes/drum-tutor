@@ -1,0 +1,28 @@
+{
+  "name": "drum-tutor",
+  "private": true,
+  "packageManager": "pnpm@12.15.0",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v && docker compose up -d --wait && pnpm db:migrate",
+    "db:migrate": "pnpm --filter @drum-tutor/db migrate",
+    "db:generate": "pnpm --filter @drum-tutor/db generate",
+    "dev:start": "./scripts/dev-start.sh",
+    "dev:stop": "./scripts/dev-stop.sh"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.3",
+    "turbo": "2.11.10",
+    "typescript": "7.0.2"
+  }
+}
