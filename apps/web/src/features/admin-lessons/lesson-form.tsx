@@ -4,7 +4,7 @@ import {
   type LessonInput,
   LessonInputSchema,
 } from "@drum-tutor/contracts";
-import { useForm } from "@tanstack/react-form";
+import { type AnyFieldApi, useForm } from "@tanstack/react-form";
 import { Loader2 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { TextField } from "@/components/text-field";
@@ -45,6 +45,18 @@ function errorMessage(error: unknown): string | undefined {
 
 const shape = LessonInputSchema.shape;
 
+/**
+ * A submit validates every field on all causes, so stale `onBlur`/`onSubmit` errors would outlive a
+ * fixed value. Editing a field drops them; its `onChange` validator then reports whatever is still wrong.
+ */
+const clearStaleErrors = {
+  onChange: ({ fieldApi }: { fieldApi: AnyFieldApi }) =>
+    fieldApi.setMeta((meta) => ({
+      ...meta,
+      errorMap: { ...meta.errorMap, onBlur: undefined, onSubmit: undefined },
+    })),
+};
+
 export function LessonForm({
   defaultValues,
   disabled,
@@ -79,17 +91,26 @@ export function LessonForm({
         });
       }}
     >
-      <form.Field name="name" validators={{ onBlur: shape.name }}>
+      <form.Field
+        name="name"
+        validators={{ onChange: shape.name, onBlur: shape.name }}
+        listeners={clearStaleErrors}
+      >
         {(field) => <TextField field={field} label="Name" disabled={locked} />}
       </form.Field>
 
-      <form.Field name="description" validators={{ onBlur: shape.description }}>
+      <form.Field
+        name="description"
+        validators={{ onChange: shape.description, onBlur: shape.description }}
+        listeners={clearStaleErrors}
+      >
         {(field) => <TextField field={field} label="Description" multiline disabled={locked} />}
       </form.Field>
 
       <form.Field
         name="difficulty"
         validators={{ onChange: shape.difficulty, onBlur: shape.difficulty }}
+        listeners={clearStaleErrors}
       >
         {(field) => {
           const error = field.state.meta.isTouched
@@ -130,7 +151,11 @@ export function LessonForm({
         }}
       </form.Field>
 
-      <form.Field name="tagIds" validators={{ onChange: shape.tagIds, onBlur: shape.tagIds }}>
+      <form.Field
+        name="tagIds"
+        validators={{ onChange: shape.tagIds, onBlur: shape.tagIds }}
+        listeners={clearStaleErrors}
+      >
         {(field) => {
           const error = field.state.meta.isTouched
             ? errorMessage(field.state.meta.errors[0])
@@ -149,7 +174,9 @@ export function LessonForm({
               <SelectedTags
                 ids={field.state.value}
                 disabled={locked}
-                onRemove={(id) => field.handleChange(field.state.value.filter((t) => t !== id))}
+                onRemove={(id) =>
+                  field.handleChange(field.state.value.filter((t: string) => t !== id))
+                }
               />
               {error ? <p className="text-sm text-destructive">{error}</p> : null}
             </div>
@@ -157,7 +184,11 @@ export function LessonForm({
         }}
       </form.Field>
 
-      <form.Field name="recommendedTempoBpm" validators={{ onBlur: shape.recommendedTempoBpm }}>
+      <form.Field
+        name="recommendedTempoBpm"
+        validators={{ onBlur: shape.recommendedTempoBpm }}
+        listeners={clearStaleErrors}
+      >
         {(field) => <TempoField field={field} disabled={locked} />}
       </form.Field>
 

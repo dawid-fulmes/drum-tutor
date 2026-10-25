@@ -16,10 +16,13 @@ const queryClient = createQueryClient({
     if (redirecting) return;
     redirecting = true;
     queryClient.setQueryData(meQueryKey, null);
-    void router.navigate({ to: "/login" }).finally(() => {
-      queryClient.clear();
-      redirecting = false;
-    });
+    router
+      .navigate({ to: "/login" })
+      .catch((error: unknown) => console.error("Redirect to /login failed", error))
+      .finally(() => {
+        queryClient.clear();
+        redirecting = false;
+      });
   },
 });
 const router = createAppRouter(queryClient);

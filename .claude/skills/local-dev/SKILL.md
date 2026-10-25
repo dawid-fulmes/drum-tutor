@@ -84,10 +84,10 @@ Lessons list and form:
 1. Open `/admin/lessons`. Expect the table with 18 seeded lessons (Name, Difficulty, Tags, Status, Created, Actions), "New lesson" button, "Per page 20". Changing page or page size changes `?page=&pageSize=` in the URL.
 2. Open `/admin/lessons/new`. Expect tempo 60 BPM (slider and number input) and duration 03:00. Press "Decrease duration by 30 seconds" until it shows 00:30. Expect that button disabled; "Increase duration by 30 seconds" gives 01:00.
 3. Type `320` into Tempo and leave the field. Expect "Tempo must be between 30 and 300 BPM". Set it back to `60`.
-4. Click "Create lesson" with the form empty. Expect errors "Name is required", "Description is required", "Choose a difficulty", "Choose at least one tag". Expect no request to `POST /api/admin/lessons`.
+4. Click "Create lesson" with the form empty. Expect errors "Name is required", "Description is required", "Choose a difficulty", "Choose at least one tag". Expect no request to `POST /api/admin/lessons`. Picking a difficulty or tag, or typing a name or description, clears that field's error immediately.
 5. Fill Name, Description, pick a difficulty, open the Tags picker, type in its search (the list narrows to matching tags, one request per debounced text), pick a tag, press Escape. Click "Create lesson". Expect the list with toast "Lesson created" and the new row as Draft. Double-clicking sends exactly one `POST`.
 6. Row menu (Actions for ...) -> Edit. Change tags and tempo, "Save". Expect toast "Lesson saved". Reopen the edit page and expect the changes.
-7. Row menu -> Publish: toast "Lesson published", badge Published. Row menu -> Move to draft: badge Draft. Double-clicking an item sends one request.
+7. Row menu -> Publish: toast "Lesson published", badge Published. Row menu -> Move to draft: toast "Lesson moved to draft", badge Draft. Double-clicking an item sends one request.
 8. Row menu -> Delete: dialog "Delete lesson?"; click Delete. Expect toast "Lesson deleted" and the row gone.
 9. A locked lesson (it has practice logs; the seed has one, or insert a row with `docker compose exec postgres psql -U drum -d drum_tutor`) shows a lock icon with tooltip "Has practice logs"; Edit and Delete in its menu are disabled. Typing its `/admin/lessons/<id>/edit` URL shows the Alert "This lesson is locked" and a disabled form.
 10. A malformed or unknown id (`/admin/lessons/not-a-uuid/edit`) shows "Lesson not found" with "Back to lessons".
@@ -95,9 +95,9 @@ Lessons list and form:
 
 Tags:
 
-12. Open `/admin/tags`. Expect the seeded tags with "Used by" counts. Add "Odd meters" (toast "Tag added"), then "odd METERS". Expect the inline error `A tag named "odd METERS" already exists` and no toast.
-13. Rename: pencil button, change the name, Enter. Escape cancels. Search "hand" shows two rows.
-14. Delete of a used tag is disabled with tooltip "Used by lessons"; delete of an unused one asks "Delete tag?" and removes it (double-click sends one `DELETE`).
+12. Open `/admin/tags`. Expect the 6 seeded tags with "Used by" counts. Add "Odd meters" (toast "Tag added"), then "odd METERS". Expect the inline error `A tag named "odd METERS" already exists` and no toast.
+13. Rename: the "Rename <name>" button, change the name, Enter (toast "Tag renamed"). Escape cancels. Search "hand" shows two rows.
+14. Delete of a used tag is disabled with tooltip "Used by lessons"; delete of an unused one asks "Delete tag?" and removes it with toast "Tag deleted" (double-click sends one `DELETE`).
 15. Infinite scroll: add more than 20 tags (loop `fetch('/api/admin/tags', { method: 'POST', ... })` through `browser_run_code_unsafe`, the browser carries the session cookie). Scroll to the bottom: pages 2 and 3 load once each, then no more requests. The tag picker in the lesson form scrolls the same way inside its popover.
 
 Session lost (run this last, it wipes data):
