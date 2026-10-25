@@ -24,5 +24,5 @@ export async function createTestApp(
 }
 
 export async function resetDatabase(db: Database): Promise<void> {
-  await db.execute(sql`TRUNCATE users CASCADE`);
+  await db.execute(sql`TRUNCATE users, tags, lessons, lesson_tags, practice_logs CASCADE`);
 }
