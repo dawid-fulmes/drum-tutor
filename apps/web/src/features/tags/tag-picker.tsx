@@ -55,7 +55,7 @@ export function TagPicker({ value, onChange, disabled, invalid }: TagPickerProps
       <PopoverContent className="w-72 p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInput placeholder="Search tags" value={input} onValueChange={setInput} />
-          <CommandList ref={setList}>
+          <CommandList ref={setList} aria-multiselectable>
             {search.isPending ? (
               <div className="flex flex-col gap-2 p-2">
                 <Skeleton className="h-6 w-full" />
@@ -70,17 +70,25 @@ export function TagPicker({ value, onChange, disabled, invalid }: TagPickerProps
               <>
                 {tags.length === 0 && <CommandEmpty>No tags found</CommandEmpty>}
                 <CommandGroup>
-                  {tags.map((tag) => (
-                    <CommandItem key={tag.id} value={tag.id} onSelect={() => toggle(tag.id)}>
-                      <Checkbox
-                        checked={value.includes(tag.id)}
-                        tabIndex={-1}
-                        aria-hidden
-                        className="pointer-events-none"
-                      />
-                      {tag.name}
-                    </CommandItem>
-                  ))}
+                  {tags.map((tag) => {
+                    const checked = value.includes(tag.id);
+                    return (
+                      <CommandItem
+                        key={tag.id}
+                        value={tag.id}
+                        aria-checked={checked}
+                        onSelect={() => toggle(tag.id)}
+                      >
+                        <Checkbox
+                          checked={checked}
+                          tabIndex={-1}
+                          aria-hidden
+                          className="pointer-events-none"
+                        />
+                        {tag.name}
+                      </CommandItem>
+                    );
+                  })}
                 </CommandGroup>
                 <LoadMoreSentinel
                   root={list}

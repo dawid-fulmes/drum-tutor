@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import { QueryError } from "@/components/query-error";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTagsByIds } from "./tags.api";
@@ -10,10 +11,11 @@ type SelectedTagsProps = {
 };
 
 export function SelectedTags({ ids, onRemove, disabled }: SelectedTagsProps) {
-  const { data: tags, isPending } = useTagsByIds(ids);
+  const { data: tags, isPending, isError, error, refetch } = useTagsByIds(ids);
 
   if (ids.length === 0) return null;
   if (isPending) return <Skeleton className="h-5 w-32" />;
+  if (isError) return <QueryError error={error} onRetry={() => refetch()} />;
 
   return (
     <ul className="flex flex-wrap gap-1.5">
