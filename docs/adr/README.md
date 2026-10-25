@@ -35,3 +35,4 @@ This directory records significant decisions and deliberately accepted technical
 | [0016](0016-web-audio-metronome-without-library.md) | Implement the metronome on the Web Audio API without an audio library | decision | accepted |
 | [0017](0017-biome-for-lint-and-format.md) | Use Biome for linting and formatting | decision | accepted |
 | [0018](0018-integration-tests-on-real-postgres.md) | Run API integration tests against real PostgreSQL via Testcontainers | decision | accepted |
+| [0019](0019-specs-and-plans-per-scope-in-docs-specs.md) | Keep specs and plans per scope in docs/specs, tracked in git | decision | accepted |
