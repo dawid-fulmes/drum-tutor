@@ -1,7 +1,7 @@
 # Lessons and Tags — Plan 02: Admin UI
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-- **Status:** approved
+- **Status:** done
 
 **Goal:** The shared web infrastructure for this scope (API client methods, `401` redirect, shadcn components, drummer and admin shells, pagination, tag picker) and the admin screens of spec §6.5: `/admin/lessons`, the lesson form, and `/admin/tags`.
 
@@ -47,7 +47,7 @@
   - `type QueryParams = Record<string, string | number | readonly string[] | undefined>`; `buildUrl(path: string, query?: QueryParams): string` — arrays become repeated keys, `undefined`, `""` and empty arrays are omitted, no `?` when nothing remains.
   - `createQueryClient(options: { onUnauthenticated: () => void }): QueryClient` — a `QueryCache` and the existing `MutationCache` both call `onUnauthenticated` for an `ApiClientError` with status `401` and skip the toast; this check runs before `meta.suppressErrorToast`. `main.tsx` passes a callback that clears the query cache and navigates to `/login`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 // api-client.test.ts
@@ -78,10 +78,10 @@ it("suppressErrorToast suppresses the toast but not the 401 redirect", async () 
 });
 ```
 
-- [ ] **Step 2: Run** `scripts/with-node.sh pnpm --filter @drum-tutor/web test`. Expected: FAIL.
-- [ ] **Step 3: Implement** the interfaces above. `meQueryOptions` already turns its own `401` into `null`, so it never triggers the callback. Keep the existing retry rule (no retry on 4xx).
-- [ ] **Step 4: Run** the web tests and `scripts/with-node.sh pnpm typecheck`. Expected: PASS.
-- [ ] **Step 5: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
+- [x] **Step 2: Run** `scripts/with-node.sh pnpm --filter @drum-tutor/web test`. Expected: FAIL.
+- [x] **Step 3: Implement** the interfaces above. `meQueryOptions` already turns its own `401` into `null`, so it never triggers the callback. Keep the existing retry rule (no retry on 4xx).
+- [x] **Step 4: Run** the web tests and `scripts/with-node.sh pnpm typecheck`. Expected: PASS.
+- [x] **Step 5: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
 
 ### Task 2: shadcn components, ADR-0037, shells and shared UI pieces
 
@@ -104,7 +104,7 @@ it("suppressErrorToast suppresses the toast but not the 401 redirect", async () 
   - Drummer shell: header "Drum Tutor", "Library" link (to `/` until plan 03 changes it to `/lessons`), the user's email, "Log out" (the existing logout mutation, moved out of the placeholder page).
   - Admin shell: header "Drum Tutor · Admin" with a "Back to app" link to `/`, and a left nav with "Lessons" (`/admin/lessons`) and "Tags" (`/admin/tags`), the active item highlighted.
 
-- [ ] **Step 1: Write the failing test** `page-items.test.ts`:
+- [x] **Step 1: Write the failing test** `page-items.test.ts`:
 
 ```ts
 expect(pageItems(1, 1)).toEqual([1]);
@@ -116,11 +116,11 @@ expect(pageItems(12, 12)).toEqual([1, "ellipsis", 11, 12]);
 expect(pageItems(1, 0)).toEqual([]);
 ```
 
-- [ ] **Step 2: Run** the web tests. Expected: FAIL.
-- [ ] **Step 3: Add the shadcn components** listed above. Pin every new dependency in `apps/web/package.json` exactly. Write **ADR-0037** (type `decision`) recording the libraries the components brought in that were not already in the repo (at least `cmdk` for Command), and add its index row. If the CLI adds anything else unexpected (e.g. a date or icon library), stop and report.
-- [ ] **Step 4: Implement** `pageItems`, the shared components and both shells. The admin shell may use the shadcn Sidebar or a simple nav made of stock components (spec §11).
-- [ ] **Step 5: Run** the web tests, `pnpm typecheck` and `pnpm build`. Start the app (`scripts/dev-start.sh`), log in, and check with the Playwright plugin: `/` shows the drummer shell and logout still works; `/admin` lands on `/admin/lessons` inside the admin shell (the page body can still be empty).
-- [ ] **Step 6: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
+- [x] **Step 2: Run** the web tests. Expected: FAIL.
+- [x] **Step 3: Add the shadcn components** listed above. Pin every new dependency in `apps/web/package.json` exactly. Write **ADR-0037** (type `decision`) recording the libraries the components brought in that were not already in the repo (at least `cmdk` for Command), and add its index row. If the CLI adds anything else unexpected (e.g. a date or icon library), stop and report.
+- [x] **Step 4: Implement** `pageItems`, the shared components and both shells. The admin shell may use the shadcn Sidebar or a simple nav made of stock components (spec §11).
+- [x] **Step 5: Run** the web tests, `pnpm typecheck` and `pnpm build`. Start the app (`scripts/dev-start.sh`), log in, and check with the Playwright plugin: `/` shows the drummer shell and logout still works; `/admin` lands on `/admin/lessons` inside the admin shell (the page body can still be empty).
+- [x] **Step 6: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
 
 ### Task 3: Tag queries and the tag picker
 
@@ -139,11 +139,11 @@ expect(pageItems(1, 0)).toEqual([]);
   - `<TagPicker value={string[]} onChange={(ids) => void} disabled? invalid? />` — a trigger button reading "Tags" plus " (n)" when n > 0, and a Popover holding a Command with `shouldFilter={false}`. The input drives `q` (debounced 300 ms). Items show a checkbox state and toggle on select. A `LoadMoreSentinel` at the end of the list loads the next page. Empty result: "No tags found". Loading: skeleton rows.
   - `<SelectedTags ids={string[]} onRemove={(id) => void} disabled? />` — removable Badges for the resolved tags (from `useTagsByIds`), sorted as the API returns them.
 
-- [ ] **Step 1: Write the failing test** `infinite.test.ts`: `nextPageParam({ page: 1, totalPages: 2 })` → `2`; `{ page: 2, totalPages: 2 }` → `undefined`; `{ page: 1, totalPages: 0 }` → `undefined`.
-- [ ] **Step 2: Run** the web tests. Expected: FAIL.
-- [ ] **Step 3: Implement** the interfaces above.
-- [ ] **Step 4: Run** the web tests and typecheck. Expected: PASS. Picker behaviour is checked in the browser through the screens that use it (Tasks 6 and 7).
-- [ ] **Step 5: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
+- [x] **Step 1: Write the failing test** `infinite.test.ts`: `nextPageParam({ page: 1, totalPages: 2 })` → `2`; `{ page: 2, totalPages: 2 }` → `undefined`; `{ page: 1, totalPages: 0 }` → `undefined`.
+- [x] **Step 2: Run** the web tests. Expected: FAIL.
+- [x] **Step 3: Implement** the interfaces above.
+- [x] **Step 4: Run** the web tests and typecheck. Expected: PASS. Picker behaviour is checked in the browser through the screens that use it (Tasks 6 and 7).
+- [x] **Step 5: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
 
 ### Task 4: Admin tags screen
 
@@ -156,14 +156,14 @@ expect(pageItems(1, 0)).toEqual([]);
 - Consumes: Task 3 `tagKeys`, `nextPageParam`; contracts `TagInputSchema`, `TagNameSchema`, `AdminTagSchema`, `ApiErrorCode`.
 - Produces in `tags.api.ts`: `useAdminTags(q: string)` (infinite, `pageSize: 20`), `useCreateTag()`, `useRenameTag()`, `useDeleteTag()`. Each mutation invalidates `tagKeys.all` and shows the success toast "Tag added" / "Tag renamed" / "Tag deleted". Create and rename set `meta: { suppressErrorToast: true }` and toast every error except `TAG_NAME_TAKEN` themselves.
 
-- [ ] **Step 1: Implement the screen** per spec §6.5 "Tags":
+- [x] **Step 1: Implement the screen** per spec §6.5 "Tags":
   - "Add tag" form at the top (TanStack Form + `TagInputSchema`). On `409 TAG_NAME_TAKEN` the API message shows under the input, not as a toast. On success the input clears.
   - A search Input (debounced `q`) above a Table with columns Name, Used by (`"{n} lessons"`, `"1 lesson"`, or `"—"` for 0), and actions. A `LoadMoreSentinel` under the table loads more.
   - Rename inline: the pencil button swaps the name for an Input with Save / Cancel; Enter saves, Escape cancels; `TAG_NAME_TAKEN` shows under that input; an unchanged name closes without a request.
   - Delete: trash button disabled with Tooltip "Used by lessons" when `lessonCount > 0`; otherwise AlertDialog "Delete tag?" / `"{name}" will be deleted.` with "Cancel" / "Delete".
   - Empty states (shadcn Empty): "No tags yet" with no search, `No tags match "{q}"` with a search. Loading: skeleton rows. Query error: `QueryError`.
-- [ ] **Step 2: Verify in the browser** (Playwright plugin, seeded DB): add "Odd meters", add "odd METERS" → inline error, rename "Groove" → "Grooves" (Enter) and back, Escape cancels, search "hand" shows two rows, delete of a used tag is disabled with the tooltip, delete of "Odd meters" asks and removes it.
-- [ ] **Step 3: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
+- [x] **Step 2: Verify in the browser** (Playwright plugin, seeded DB): add "Odd meters", add "odd METERS" → inline error, rename "Groove" → "Grooves" (Enter) and back, Escape cancels, search "hand" shows two rows, delete of a used tag is disabled with the tooltip, delete of "Odd meters" asks and removes it.
+- [x] **Step 3: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
 
 ### Task 5: Admin lesson list
 
@@ -180,11 +180,11 @@ expect(pageItems(1, 0)).toEqual([]);
   - `adminLessonsQueryOptions(search)`, `adminLessonQueryOptions(id)`; mutations `useCreateLesson()`, `useUpdateLesson(id)`, `useDeleteLesson()`, `usePublishLesson()`, `useUnpublishLesson()`, each invalidating `lessonKeys.all` and toasting "Lesson created" / "Lesson saved" / "Lesson deleted" / "Lesson published" / "Lesson moved to draft".
   - `formatDifficulty("beginner") === "Beginner"`; `formatDate(iso)` → `Intl.DateTimeFormat("en", { dateStyle: "medium" })`.
 
-- [ ] **Step 1: Write the failing test**: `{}` → `{ page: 1, pageSize: 20 }`; `{ page: 3, pageSize: 50 }` kept; `{ page: 0, pageSize: 7 }` and `{ page: "x" }` → defaults.
-- [ ] **Step 2: Run** the web tests. Expected: FAIL.
-- [ ] **Step 3: Implement the screen** per spec §6.5 "Lessons": header "Lessons" with a "New lesson" button; Table columns Name (+ lock icon with Tooltip "Has practice logs" when `locked`), Difficulty, Tags (first tag Badge + `"+N"` Badge), Status Badge ("Draft" / "Published"), Created, actions DropdownMenu (Edit; Publish for drafts or Move to draft for published; Delete with AlertDialog "Delete lesson?" / `"{name}" will be deleted. This can't be undone.`). For `locked` rows Edit, Move to draft and Delete render disabled. `PaginationBar` with `pageSizes [20, 50, 100]`; changing the page size resets `page` to 1. Skeleton rows while loading, `QueryError` on error, Empty "No lessons yet" with a "New lesson" button. If `page > totalPages > 0`, navigate (replace) to `totalPages`.
-- [ ] **Step 4: Run** the web tests, typecheck; in the browser (seeded): the 18 lessons fit on one page at 20, so page links are hidden and only "Per page" shows; the URL `?page=5` is replaced by `?page=1`; the locked lesson's actions are disabled, publish a draft and move it back, delete a draft after confirming.
-- [ ] **Step 5: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
+- [x] **Step 1: Write the failing test**: `{}` → `{ page: 1, pageSize: 20 }`; `{ page: 3, pageSize: 50 }` kept; `{ page: 0, pageSize: 7 }` and `{ page: "x" }` → defaults.
+- [x] **Step 2: Run** the web tests. Expected: FAIL.
+- [x] **Step 3: Implement the screen** per spec §6.5 "Lessons": header "Lessons" with a "New lesson" button; Table columns Name (+ lock icon with Tooltip "Has practice logs" when `locked`), Difficulty, Tags (first tag Badge + `"+N"` Badge), Status Badge ("Draft" / "Published"), Created, actions DropdownMenu (Edit; Publish for drafts or Move to draft for published; Delete with AlertDialog "Delete lesson?" / `"{name}" will be deleted. This can't be undone.`). For `locked` rows Edit, Move to draft and Delete render disabled. `PaginationBar` with `pageSizes [20, 50, 100]`; changing the page size resets `page` to 1. Skeleton rows while loading, `QueryError` on error, Empty "No lessons yet" with a "New lesson" button. If `page > totalPages > 0`, navigate (replace) to `totalPages`.
+- [x] **Step 4: Run** the web tests, typecheck; in the browser (seeded): the 18 lessons fit on one page at 20, so page links are hidden and only "Per page" shows; the URL `?page=5` is replaced by `?page=1`; the locked lesson's actions are disabled, publish a draft and move it back, delete a draft after confirming.
+- [x] **Step 5: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
 
 ### Task 6: Lesson form (create and edit)
 
@@ -201,28 +201,28 @@ expect(pageItems(1, 0)).toEqual([]);
   - `type LessonFormValues = Omit<LessonInput, "difficulty"> & { difficulty: Difficulty | "" }`; `NEW_LESSON_DEFAULTS: LessonFormValues` = name `""`, description `""`, difficulty `""`, tagIds `[]`, tempo `60`, duration `180`.
   - `<LessonForm defaultValues disabled pending submitLabel onSubmit={(input: LessonInput) => void} onCancel />`.
 
-- [ ] **Step 1: Write the failing test** `duration.test.ts`: `formatDuration(300) === "5:00"`, `formatDuration(30) === "0:30"`, `formatDuration(3600) === "60:00"`; `formatDurationClock(180) === "03:00"`, `formatDurationClock(3600) === "60:00"`; `stepDuration(180, 1) === 210`, `stepDuration(30, -1) === 30`, `stepDuration(3600, 1) === 3600`.
-- [ ] **Step 2: Run** the web tests. Expected: FAIL.
-- [ ] **Step 3: Implement the form** per spec §6.5 "Lesson form": Name Input; Description Textarea; Difficulty RadioGroup (Beginner, Intermediate, Advanced; none selected on create); Tags via `TagPicker` + `SelectedTags`; Tempo = Slider 30–300 step 1 next to a number Input with the "BPM" suffix, kept in sync — typing sets the field to the typed number (empty → `NaN`, which fails the schema with "Tempo must be between 30 and 300 BPM"), the Slider shows the last valid value; Duration = read-only `MM:SS` text between "−" and "+" Buttons (`stepDuration`), "−" disabled at 30 s and "+" at 3600 s, **no typing**. Validation with `LessonInputSchema` on submit and on blur per field; errors under each field. While pending, all fields and buttons are disabled and Save shows a spinner.
-- [ ] **Step 4: Implement the routes.**
+- [x] **Step 1: Write the failing test** `duration.test.ts`: `formatDuration(300) === "5:00"`, `formatDuration(30) === "0:30"`, `formatDuration(3600) === "60:00"`; `formatDurationClock(180) === "03:00"`, `formatDurationClock(3600) === "60:00"`; `stepDuration(180, 1) === 210`, `stepDuration(30, -1) === 30`, `stepDuration(3600, 1) === 3600`.
+- [x] **Step 2: Run** the web tests. Expected: FAIL.
+- [x] **Step 3: Implement the form** per spec §6.5 "Lesson form": Name Input; Description Textarea; Difficulty RadioGroup (Beginner, Intermediate, Advanced; none selected on create); Tags via `TagPicker` + `SelectedTags`; Tempo = Slider 30–300 step 1 next to a number Input with the "BPM" suffix, kept in sync — typing sets the field to the typed number (empty → `NaN`, which fails the schema with "Tempo must be between 30 and 300 BPM"), the Slider shows the last valid value; Duration = read-only `MM:SS` text between "−" and "+" Buttons (`stepDuration`), "−" disabled at 30 s and "+" at 3600 s, **no typing**. Validation with `LessonInputSchema` on submit and on blur per field; errors under each field. While pending, all fields and buttons are disabled and Save shows a spinner.
+- [x] **Step 4: Implement the routes.**
   - `/admin/lessons/new`: `NEW_LESSON_DEFAULTS`, Save → `useCreateLesson` → navigate to `/admin/lessons`.
   - `/admin/lessons/$lessonId/edit`: loads `adminLessonQueryOptions(id)`; `404` → `NotFound` "Lesson not found" back to `/admin/lessons`; other errors → `QueryError`. When `locked`, an Alert titled "This lesson is locked" with "Someone has already practiced it, so it can't be edited or deleted." sits above the form and the form is `disabled`. Save → `useUpdateLesson(id)` → navigate to `/admin/lessons`. On `409 LESSON_LOCKED` or `404` (global toast shows the message), refetch the lesson so the page switches state (Review Focus 5).
-- [ ] **Step 5: Run** the web tests and typecheck. Expected: PASS.
-- [ ] **Step 6: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
+- [x] **Step 5: Run** the web tests and typecheck. Expected: PASS.
+- [x] **Step 6: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
 
 ### Task 7: Browser verification and skill update
 
 **Files:**
 - Modify: `.claude/skills/local-dev/SKILL.md` (add an "Admin flows" section under the e2e part, using the seed)
 
-- [ ] **Step 1: Run** `scripts/with-node.sh pnpm lint && scripts/with-node.sh pnpm typecheck && scripts/with-node.sh pnpm test && scripts/with-node.sh pnpm build`. Expected: all PASS.
-- [ ] **Step 2: Drive the admin flows** with the Playwright plugin on a freshly seeded DB (`pnpm db:seed`), logging in with a fresh `admin-<timestamp>@example.com`:
+- [x] **Step 1: Run** `scripts/with-node.sh pnpm lint && scripts/with-node.sh pnpm typecheck && scripts/with-node.sh pnpm test && scripts/with-node.sh pnpm build`. Expected: all PASS.
+- [x] **Step 2: Drive the admin flows** with the Playwright plugin on a freshly seeded DB (`pnpm db:seed`), logging in with a fresh `admin-<timestamp>@example.com`:
   - create a lesson: defaults show 60 BPM and 03:00; "−" pressed until 00:30 then disabled; "+" adds 30 s; typing 320 into BPM shows the tempo error; submitting empty shows the name, description, difficulty and tag errors; a valid save lands on the list with "Lesson created" and the new row as Draft;
   - edit that lesson, change tags and tempo, save; reopen and see the changes;
   - publish it, move it to draft, delete it with confirmation;
   - the seeded locked lesson: menu items disabled with the lock tooltip; typing its edit URL shows the locked Alert and a disabled form;
   - tag picker: search narrows results; scroll loads more (add tags through `/admin/tags` until there are more than 20, then scroll);
   - the tags screen flows from Task 4.
-- [ ] **Step 3: Check the Review Focus items** in the browser: double-click Save / Publish / Delete → one request each in `browser_network_requests` (2); type quickly in the picker and confirm the final list matches the final text (3); scroll the picker to the end with ≤ 20 tags → no further `/api/tags` requests (4); open an edit page, insert a practice log for that lesson in another way (e.g. `psql` through `docker compose exec`), press Save → toast, then the locked Alert (5); run `scripts/with-node.sh pnpm db:reset` with `/admin/lessons` open, click any action → one redirect to `/login`, no error toast (1).
-- [ ] **Step 4: Update the skill** with the admin flows above in the same style as the existing login flow (numbered steps, expected results).
-- [ ] **Step 5: Checkpoint.** `pnpm format`. Tick this plan's checkboxes and set its status to `done`. Commit the task's files to `main`.
+- [x] **Step 3: Check the Review Focus items** in the browser: double-click Save / Publish / Delete → one request each in `browser_network_requests` (2); type quickly in the picker and confirm the final list matches the final text (3); scroll the picker to the end with ≤ 20 tags → no further `/api/tags` requests (4); open an edit page, insert a practice log for that lesson in another way (e.g. `psql` through `docker compose exec`), press Save → toast, then the locked Alert (5); run `scripts/with-node.sh pnpm db:reset` with `/admin/lessons` open, click any action → one redirect to `/login`, no error toast (1).
+- [x] **Step 4: Update the skill** with the admin flows above in the same style as the existing login flow (numbered steps, expected results).
+- [x] **Step 5: Checkpoint.** `pnpm format`. Tick this plan's checkboxes and set its status to `done`. Commit the task's files to `main`.
