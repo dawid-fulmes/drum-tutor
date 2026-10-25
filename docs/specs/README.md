@@ -49,7 +49,7 @@ Changing an approved spec: edit it, add a dated entry to a `## Changelog` sectio
 
 ## Index
 
-| Scope                                            | Spec status | Plans                                                                                                                                                                                                            |
-| ------------------------------------------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [project-foundation](project-foundation/spec.md) | implemented | [plan.md](project-foundation/plan.md) (done)                                                                                                                                                                     |
-| [lessons-and-tags](lessons-and-tags/spec.md)     | approved    | [plan-01-backend.md](lessons-and-tags/plan-01-backend.md) (done), [plan-02-admin-ui.md](lessons-and-tags/plan-02-admin-ui.md) (done), [plan-03-library-ui.md](lessons-and-tags/plan-03-library-ui.md) (approved) |
+| Scope                                            | Spec status | Plans                                                                                                                                                                                                        |
+| ------------------------------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [project-foundation](project-foundation/spec.md) | implemented | [plan.md](project-foundation/plan.md) (done)                                                                                                                                                                 |
+| [lessons-and-tags](lessons-and-tags/spec.md)     | implemented | [plan-01-backend.md](lessons-and-tags/plan-01-backend.md) (done), [plan-02-admin-ui.md](lessons-and-tags/plan-02-admin-ui.md) (done), [plan-03-library-ui.md](lessons-and-tags/plan-03-library-ui.md) (done) |

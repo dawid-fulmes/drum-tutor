@@ -1,6 +1,6 @@
 # Lessons and Tags — Spec
 
-- **Status:** approved
+- **Status:** implemented
 - **Date:** 2026-10-25
 - **Related:** PRD US-2, US-3, US-4, US-5, US-6, US-16, US-17, US-17a, US-18, US-19; R5, R7, R8, R9, R10, R11, R13; ADR-0002, ADR-0003, ADR-0008, ADR-0011, ADR-0012, ADR-0021, ADR-0022, ADR-0030 – ADR-0036
 - **Plans:** [plan-01-backend.md](plan-01-backend.md), [plan-02-admin-ui.md](plan-02-admin-ui.md), [plan-03-library-ui.md](plan-03-library-ui.md)

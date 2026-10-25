@@ -1,7 +1,7 @@
 # Lessons and Tags — Plan 03: Library UI
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-- **Status:** approved
+- **Status:** done
 
 **Goal:** The drummer side of spec §6.4: `/` redirecting to `/lessons`, the library with URL-held filters, sort and pagination, both empty states and skeletons, and the lesson details page with the signature placeholder and a disabled Start button. Then close the scope (PRD ticks, statuses).
 
@@ -50,7 +50,7 @@
   - `libraryQueryOptions(search: LibrarySearch)` → `GET /api/lessons` with `{ page, pageSize, tagIds, difficulties, sort }`, parsed with `pageSchema(LessonSummarySchema)`, key `lessonKeys.library.list(search)`.
   - `lessonQueryOptions(id: string)` → `GET /api/lessons/:id`, `LessonDetailSchema`, key `lessonKeys.library.detail(id)`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 expect(librarySearchSchema.parse({})).toEqual({
@@ -80,10 +80,10 @@ expect(hasActiveFilters(librarySearchSchema.parse({ sort: "oldest" }))).toBe(fal
 expect(hasActiveFilters(librarySearchSchema.parse({ difficulties: ["advanced"] }))).toBe(true);
 ```
 
-- [ ] **Step 2: Run** `scripts/with-node.sh pnpm --filter @drum-tutor/web test`. Expected: FAIL.
-- [ ] **Step 3: Implement** the interfaces and route changes above. Check that TanStack Router's default search serialization round-trips the arrays (reload `/lessons?…` built by a `navigate`).
-- [ ] **Step 4: Run** the web tests and typecheck. In the browser, `/` lands on `/lessons` inside the drummer shell.
-- [ ] **Step 5: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
+- [x] **Step 2: Run** `scripts/with-node.sh pnpm --filter @drum-tutor/web test`. Expected: FAIL.
+- [x] **Step 3: Implement** the interfaces and route changes above. Check that TanStack Router's default search serialization round-trips the arrays (reload `/lessons?…` built by a `navigate`).
+- [x] **Step 4: Run** the web tests and typecheck. In the browser, `/` lands on `/lessons` inside the drummer shell.
+- [x] **Step 5: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
 
 ### Task 2: Library screen
 
@@ -95,7 +95,7 @@ expect(hasActiveFilters(librarySearchSchema.parse({ difficulties: ["advanced"] }
 - Consumes: Task 1 search schema and queries; plan 02 `TagPicker`, `SelectedTags`, `useTagsByIds`, `PaginationBar`, `QueryError`, `formatDuration`, `formatDifficulty`.
 - Produces: `<LessonCard lesson={LessonSummary} librarySearch={LibrarySearch} />` — the whole card is a `Link` to `/lessons/$lessonId` carrying `librarySearch` in history `state` (used by Task 3).
 
-- [ ] **Step 1: Implement the screen** per spec §6.4 "Library":
+- [x] **Step 1: Implement the screen** per spec §6.4 "Library":
   - **Filters row:** `TagPicker` bound to `search.tagIds`; difficulty ToggleGroup (`type="multiple"`, items Beginner / Intermediate / Advanced) bound to `search.difficulties`; sort Select "Newest first" / "Oldest first"; a "Clear filters" Button shown when `hasActiveFilters`. Every change navigates with the new search and `page: 1`; changing the page size also resets `page` to 1.
   - **Below the row:** `SelectedTags` for `search.tagIds` (removing one updates the URL) and the count from `totalItems`: `"1 lesson"` / `"{n} lessons"`.
   - **Unknown tag ids:** when `useTagsByIds(search.tagIds)` succeeds with fewer tags than requested, navigate with `replace: true` keeping only the returned ids (Review Focus 2).
@@ -104,8 +104,8 @@ expect(hasActiveFilters(librarySearchSchema.parse({ difficulties: ["advanced"] }
   - **Error:** `QueryError` with retry.
   - **Pagination:** `PaginationBar` with `LIBRARY_PAGE_SIZES`. If `page > totalPages && totalPages > 0`, navigate (`replace`) to `page: totalPages` (Review Focus 3).
   - **Empty states** (shadcn Empty): with no active filters and `totalItems = 0` → "No lessons yet" / "New lessons will show up here once they are published.", no action; with active filters and `totalItems = 0` → "No lessons match these filters" / "Try removing a tag or selecting more levels." plus a "Clear filters" Button.
-- [ ] **Step 2: Run** typecheck and the web tests. In the browser (seeded): 15 lessons over 2 pages at 12; selecting "Beginner" and "Advanced" narrows; two tags narrow further; reload keeps everything.
-- [ ] **Step 3: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
+- [x] **Step 2: Run** typecheck and the web tests. In the browser (seeded): 15 lessons over 2 pages at 12; selecting "Beginner" and "Advanced" narrows; two tags narrow further; reload keeps everything.
+- [x] **Step 3: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
 
 ### Task 3: Lesson details screen
 
@@ -116,32 +116,32 @@ expect(hasActiveFilters(librarySearchSchema.parse({ difficulties: ["advanced"] }
 **Interfaces:**
 - Consumes: Task 1 `lessonQueryOptions`; Task 2 history state; plan 02 `NotFound`, `QueryError`.
 
-- [ ] **Step 1: Implement the screen** per spec §6.4 "Details":
+- [x] **Step 1: Implement the screen** per spec §6.4 "Details":
   - "‹ Back to library" links to `/lessons` with `location.state.librarySearch` when present, otherwise plain `/lessons`.
   - The lesson name as the page heading; the difficulty and tag Badges; `"Recommended: {tempo} BPM · {formatDuration(duration)}"`; the description as plain text with line breaks kept (`whitespace-pre-line`).
   - A box with a dashed border and the text "Sheet coming soon".
   - A primary "Start" Button, always `disabled`.
   - Loading: a skeleton of the same layout. An `ApiClientError` with status `404` or `400` → `NotFound` "Lesson not found" with a link back to `/lessons` (Review Focus 5). Other errors → `QueryError`.
-- [ ] **Step 2: Run** typecheck. In the browser: open a card from page 2 with a filter set, press "Back to library", and land on page 2 with the filter; reload the details page and press back again with the same result.
-- [ ] **Step 3: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
+- [x] **Step 2: Run** typecheck. In the browser: open a card from page 2 with a filter set, press "Back to library", and land on page 2 with the filter; reload the details page and press back again with the same result.
+- [x] **Step 3: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
 
 ### Task 4: Browser verification, skill, PRD and scope close
 
 **Files:**
 - Modify: `.claude/skills/local-dev/SKILL.md` (library flows), `docs/PRD.md` (ticks), `docs/specs/lessons-and-tags/spec.md` (status), `docs/specs/README.md` (index row)
 
-- [ ] **Step 1: Run** `scripts/with-node.sh pnpm lint && scripts/with-node.sh pnpm typecheck && scripts/with-node.sh pnpm test && scripts/with-node.sh pnpm build`. Expected: all PASS.
-- [ ] **Step 2: Drive the library flows** with the Playwright plugin on a freshly seeded DB, following spec §7 "UI verification": filters, sort, pagination, per-page change, refresh keeps state, skeletons visible on load (throttle the network or take a snapshot right after navigating), both empty states (the "no lessons" one after `pnpm db:reset`), details page back link, Start disabled, "Sheet coming soon", and a draft's details URL showing "Lesson not found".
-- [ ] **Step 3: Check the Review Focus items:**
+- [x] **Step 1: Run** `scripts/with-node.sh pnpm lint && scripts/with-node.sh pnpm typecheck && scripts/with-node.sh pnpm test && scripts/with-node.sh pnpm build`. Expected: all PASS.
+- [x] **Step 2: Drive the library flows** with the Playwright plugin on a freshly seeded DB, following spec §7 "UI verification": filters, sort, pagination, per-page change, refresh keeps state, skeletons visible on load (throttle the network or take a snapshot right after navigating), both empty states (the "no lessons" one after `pnpm db:reset`), details page back link, Start disabled, "Sheet coming soon", and a draft's details URL showing "Lesson not found".
+- [x] **Step 3: Check the Review Focus items:**
   - (1) open the garbage URL from Review Focus 1;
   - (2) select a tag, delete it in the DB (`docker compose exec` + `psql`, removing its `lesson_tags` first), reload, and see the URL lose the id with no extra history entry;
   - (3) type `?page=9` and see `page=2`; on page 2, change a filter and see `page=1`; filter to zero results with `page=3` in the URL and see the empty state;
   - (4) apply three filter changes, then go back twice and forward once, checking controls and results each time;
   - (5) open `/lessons/abc`, a random uuid, and a draft's id.
-- [ ] **Step 4: Update the skill** with the library flows (numbered steps, expected results), next to the admin flows from plan 02.
-- [ ] **Step 5: Close the scope.**
+- [x] **Step 4: Update the skill** with the library flows (numbered steps, expected results), next to the admin flows from plan 02.
+- [x] **Step 5: Close the scope.**
   - In `docs/PRD.md`, tick US-3, US-4, US-16, US-17a, US-18 and US-19, and add `lessons-and-tags` to the line that lists the scope behind each ticked story. Leave US-2, US-5, US-6 and US-17 unticked (spec §10).
   - Set this plan's status to `done` and tick its checkboxes.
   - Set the spec status to `implemented` once all three plans are `done`, and update the row in `docs/specs/README.md`.
   - List the ADRs created during execution (ADR-0037, plus any others) in the summary.
-- [ ] **Step 6: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
+- [x] **Step 6: Checkpoint.** `pnpm format`. Commit the task's files to `main`.
