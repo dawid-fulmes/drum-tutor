@@ -14,7 +14,6 @@
       "!**/.turbo",
       "!.dev",
       "!.superpowers",
-      "!**/*.md",
       "!pnpm-lock.yaml"
     ]
   },
@@ -41,6 +40,11 @@
   "css": {
     "parser": {
       "tailwindDirectives": true
+    }
+  },
+  "markdown": {
+    "parser": {
+      "frontmatter": true
     }
   }
 }

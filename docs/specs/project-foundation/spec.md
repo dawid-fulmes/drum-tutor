@@ -63,42 +63,41 @@ There are two audiences, and both matter equally:
 
 ### 4.1 Repository and tooling
 
-| Item | Decision |
-|---|---|
-| Node | `.nvmrc` = `24`; root `package.json` `engines.node` = `>=24 <25` |
-| pnpm | `packageManager` field pins the exact pnpm version; installed via `corepack enable` |
-| Workspaces | `apps/*`, `packages/*` |
-| Internal packages | `contracts`, `db` and `config` are consumed as TypeScript source (no build step), via `exports` pointing at `src`. *(Claude's call — builder may choose a build step if a tool requires it.)* |
-| TypeScript | Strict. Shared presets in `packages/config` (base, node, react) |
-| Lint / format | Root `biome.json`. Biome runs once at the root, not per package |
-| Env | Root `.env.example` committed; `.env` git-ignored. The API validates env with Zod at startup and fails fast with a readable message |
+| Item              | Decision                                                                                                                                                                                      |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Node              | `.nvmrc` = `24`; root `package.json` `engines.node` = `>=24 <25`                                                                                                                              |
+| pnpm              | `packageManager` field pins the exact pnpm version; installed via `corepack enable`                                                                                                           |
+| Workspaces        | `apps/*`, `packages/*`                                                                                                                                                                        |
+| Internal packages | `contracts`, `db` and `config` are consumed as TypeScript source (no build step), via `exports` pointing at `src`. _(Claude's call — builder may choose a build step if a tool requires it.)_ |
+| TypeScript        | Strict. Shared presets in `packages/config` (base, node, react)                                                                                                                               |
+| Lint / format     | Root `biome.json`. Biome runs once at the root, not per package                                                                                                                               |
+| Env               | Root `.env.example` committed; `.env` git-ignored. The API validates env with Zod at startup and fails fast with a readable message                                                           |
 
 **Root scripts** (the same names are used in the README and the skill):
 
-| Script | Does |
-|---|---|
-| `pnpm db:up` | Start PostgreSQL via Docker Compose and wait until it is healthy |
-| `pnpm db:down` | Stop the database container (data kept) |
-| `pnpm db:reset` | Drop the volume, start fresh and migrate (data is disposable, ADR-0004) |
-| `pnpm db:migrate` | Apply Drizzle migrations |
-| `pnpm db:generate` | Generate a migration from schema changes |
-| `pnpm dev` | Run API and web in watch mode (Turborepo) |
-| `pnpm lint` | `biome check` on the whole repo |
-| `pnpm format` | Biome format + safe fixes, writing changes |
-| `pnpm typecheck` | `tsc --noEmit` in every package (Turborepo) |
-| `pnpm test` | All Vitest suites (unit + API integration; integration needs Docker) |
-| `pnpm build` | Build all apps (sanity check only; no deployment) |
+| Script             | Does                                                                    |
+| ------------------ | ----------------------------------------------------------------------- |
+| `pnpm db:up`       | Start PostgreSQL via Docker Compose and wait until it is healthy        |
+| `pnpm db:down`     | Stop the database container (data kept)                                 |
+| `pnpm db:reset`    | Drop the volume, start fresh and migrate (data is disposable, ADR-0004) |
+| `pnpm db:migrate`  | Apply Drizzle migrations                                                |
+| `pnpm db:generate` | Generate a migration from schema changes                                |
+| `pnpm dev`         | Run API and web in watch mode (Turborepo)                               |
+| `pnpm lint`        | `biome check` on the whole repo                                         |
+| `pnpm format`      | Biome format + safe fixes, writing changes                              |
+| `pnpm typecheck`   | `tsc --noEmit` in every package (Turborepo)                             |
+| `pnpm test`        | All Vitest suites (unit + API integration; integration needs Docker)    |
+| `pnpm build`       | Build all apps (sanity check only; no deployment)                       |
 
 Script names are fixed by this spec. Their implementation is left to the builder.
 
 ### 4.2 Local runtime
 
-| Component | How it runs | Address |
-|---|---|---|
+| Component  | How it runs                                                  | Address                                                 |
+| ---------- | ------------------------------------------------------------ | ------------------------------------------------------- |
 | PostgreSQL | Docker Compose service with a named volume and a healthcheck | host port from `.env` (`POSTGRES_PORT`, default `5442`) |
-| API | On the host, `tsx` watch | `http://localhost:3330`, all routes under `/api` |
-| Web | On the host, Vite dev server, `strictPort: true` | `http://localhost:5330` |
-
+| API        | On the host, `tsx` watch                                     | `http://localhost:3330`, all routes under `/api`        |
+| Web        | On the host, Vite dev server, `strictPort: true`             | `http://localhost:5330`                                 |
 - Vite proxies `/api` to the API, so the browser sees one origin. That avoids CORS in dev and lets the session cookie work without cross-site settings.
 - Ports are fixed so that the skill and README can rely on them. If a port is busy, startup fails loudly instead of silently moving to another port.
 
@@ -106,12 +105,11 @@ Script names are fixed by this spec. Their implementation is left to the builder
 
 Table `users`:
 
-| Column | Type | Rules |
-|---|---|---|
-| `id` | `uuid` | PK, generated by the database |
-| `email` | `text` | not null, **unique**; always stored normalized |
-| `created_at` | `timestamptz` | not null, default `now()` |
-
+| Column       | Type          | Rules                                          |
+| ------------ | ------------- | ---------------------------------------------- |
+| `id`         | `uuid`        | PK, generated by the database                  |
+| `email`      | `text`        | not null, **unique**; always stored normalized |
+| `created_at` | `timestamptz` | not null, default `now()`                      |
 - Drizzle schema plus a generated SQL migration committed in `packages/db`.
 - `packages/db` exports the schema, a client factory (from a connection string) and a programmatic `migrate` function. Integration tests use the same function on the Testcontainers database.
 - No seed data in this scope; the `seed` entry point arrives with lessons and tags.
@@ -138,12 +136,12 @@ Fastify's validation errors, 404s and unhandled errors are all mapped to this sh
 
 **Endpoints**
 
-| Method & path | Request | Success | Errors |
-|---|---|---|---|
-| `POST /api/auth/login` | `{ email }` | `200 User`, sets session cookie. Creates the user if the normalized email does not exist, otherwise returns the existing one | `400 VALIDATION_ERROR` |
-| `GET /api/auth/me` | — (cookie) | `200 User` | `401 UNAUTHENTICATED` when there is no cookie, the cookie is invalid, or the user no longer exists (e.g. after `db:reset`); in that last case the cookie is also cleared |
-| `POST /api/auth/logout` | — | `204`, clears the cookie. Idempotent: works without a session too | — |
-| `GET /api/health` | — | `200 { status: "ok" }` after a successful DB round-trip | `503` when the DB is unreachable |
+| Method & path           | Request     | Success                                                                                                                      | Errors                                                                                                                                                                   |
+| ----------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `POST /api/auth/login`  | `{ email }` | `200 User`, sets session cookie. Creates the user if the normalized email does not exist, otherwise returns the existing one | `400 VALIDATION_ERROR`                                                                                                                                                   |
+| `GET /api/auth/me`      | — (cookie)  | `200 User`                                                                                                                   | `401 UNAUTHENTICATED` when there is no cookie, the cookie is invalid, or the user no longer exists (e.g. after `db:reset`); in that last case the cookie is also cleared |
+| `POST /api/auth/logout` | —           | `204`, clears the cookie. Idempotent: works without a session too                                                            | —                                                                                                                                                                        |
+| `GET /api/health`       | —           | `200 { status: "ok" }` after a successful DB round-trip                                                                      | `503` when the DB is unreachable                                                                                                                                         |
 
 `User = { id: string (uuid); email: string; createdAt: string (ISO 8601) }`
 
@@ -152,7 +150,7 @@ Fastify's validation errors, 404s and unhandled errors are all mapped to this sh
 
 ### 4.5 Session (ADR-0023)
 
-- On login the API sets a **signed, httpOnly** cookie holding the user id. The cookie uses `SameSite=Lax` and `Path=/`, is `Secure` outside development, and has a 30-day max age *(Claude's call)*. It is signed with `COOKIE_SECRET` from env.
+- On login the API sets a **signed, httpOnly** cookie holding the user id. The cookie uses `SameSite=Lax` and `Path=/`, is `Secure` outside development, and has a 30-day max age _(Claude's call)_. It is signed with `COOKIE_SECRET` from env.
 - There is no sessions table. Logout clears the cookie on the client.
 - Identity is resolved in **one place**: a Fastify plugin that decorates `request.user` and offers a `requireUser` guard. Business routes never read the cookie themselves. This is the single auth boundary that ADR-0001 requires, so real authentication can later replace it without touching business endpoints.
 
@@ -203,18 +201,18 @@ Fastify's validation errors, 404s and unhandled errors are all mapped to this sh
 
 ## 5. Decisions recorded with this scope
 
-| ADR | Decision |
-|---|---|
-| [ADR-0020](../../adr/0020-tanstack-form-for-forms.md) | TanStack Form for forms, validated with contract Zod schemas |
-| [ADR-0021](../../adr/0021-global-mutation-error-toasts-with-sonner.md) | Global mutation error toasts with Sonner |
-| [ADR-0022](../../adr/0022-uniform-api-error-shape.md) | One error response shape for every API error |
-| [ADR-0023](../../adr/0023-signed-cookie-session-without-session-store.md) | Signed cookie holding the user id, no session store (tech-debt) |
-| [ADR-0024](../../adr/0024-normalize-emails-trim-lowercase.md) | Normalize emails by trimming and lowercasing |
-| [ADR-0025](../../adr/0025-thin-typed-fetch-client.md) | Thin typed `fetch` client instead of an HTTP library or generated client |
+| ADR                                                                                      | Decision                                                                      |
+| ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| [ADR-0020](../../adr/0020-tanstack-form-for-forms.md)                                    | TanStack Form for forms, validated with contract Zod schemas                  |
+| [ADR-0021](../../adr/0021-global-mutation-error-toasts-with-sonner.md)                   | Global mutation error toasts with Sonner                                      |
+| [ADR-0022](../../adr/0022-uniform-api-error-shape.md)                                    | One error response shape for every API error                                  |
+| [ADR-0023](../../adr/0023-signed-cookie-session-without-session-store.md)                | Signed cookie holding the user id, no session store (tech-debt)               |
+| [ADR-0024](../../adr/0024-normalize-emails-trim-lowercase.md)                            | Normalize emails by trimming and lowercasing                                  |
+| [ADR-0025](../../adr/0025-thin-typed-fetch-client.md)                                    | Thin typed `fetch` client instead of an HTTP library or generated client      |
 | [ADR-0026](../../adr/0026-local-dev-postgres-in-docker-apps-on-host-with-agent-skill.md) | Local dev: only PostgreSQL in Docker, apps on host, one repo skill for agents |
-| [ADR-0027](../../adr/0027-defer-committed-e2e-suite-use-playwright-plugin.md) | No committed e2e suite yet; agents use the Playwright plugin (tech-debt) |
-| [ADR-0028](../../adr/0028-fastify-zod-type-provider-and-swagger-for-openapi.md) | fastify-type-provider-zod + @fastify/swagger (recorded during execution) |
-| [ADR-0029](../../adr/0029-pnpm-supply-chain-policy-exceptions.md) | pnpm 12 supply-chain policy exceptions (tech-debt, recorded during execution) |
+| [ADR-0027](../../adr/0027-defer-committed-e2e-suite-use-playwright-plugin.md)            | No committed e2e suite yet; agents use the Playwright plugin (tech-debt)      |
+| [ADR-0028](../../adr/0028-fastify-zod-type-provider-and-swagger-for-openapi.md)          | fastify-type-provider-zod + @fastify/swagger (recorded during execution)      |
+| [ADR-0029](../../adr/0029-pnpm-supply-chain-policy-exceptions.md)                        | pnpm 12 supply-chain policy exceptions (tech-debt, recorded during execution) |
 
 ## 6. Left to the builder
 

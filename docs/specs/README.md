@@ -49,6 +49,6 @@ Changing an approved spec: edit it, add a dated entry to a `## Changelog` sectio
 
 ## Index
 
-| Scope | Spec status | Plans |
-|---|---|---|
+| Scope                                            | Spec status | Plans                                        |
+| ------------------------------------------------ | ----------- | -------------------------------------------- |
 | [project-foundation](project-foundation/spec.md) | implemented | [plan.md](project-foundation/plan.md) (done) |

@@ -61,7 +61,7 @@ Login / user creation flow (the baseline e2e check):
 
 1. Open `/`. Expect a redirect to `/login`, with heading "Drum Tutor", field "Email" and button "Log in".
 2. Submit `not-an-email`. Expect "Invalid email address" under the field and no request to `/api/auth/login`.
-3. Submit the fresh email, mixing in uppercase letters and surrounding spaces (e.g. `  Check-123@Example.com `). Expect `/` with "Logged in as check-123@example.com" (trimmed and lowercased).
+3. Submit the fresh email, mixing in uppercase letters and surrounding spaces (e.g. ` Check-123@Example.com`). Expect `/` with "Logged in as check-123@example.com" (trimmed and lowercased).
 4. Reload. Expect to still be logged in.
 5. Open `/login`. Expect a redirect back to `/`.
 6. Click "Log out". Expect `/login`. Reload, and expect to stay on `/login`.
@@ -71,11 +71,11 @@ A `401` from `/api/auth/me` in the browser console is expected whenever nobody i
 
 ## Troubleshooting (`dev-start.sh` messages)
 
-| Message | Meaning / what to do |
-|---|---|
-| `Node 24 is not installed. Run: nvm install` | Ask the user to run `nvm install` in the repo. |
-| `nvm not found …` | nvm is missing. Ask the user to install it (see README). |
-| `pnpm is not available …` | Ask the user to run `nvm use && corepack enable`. |
-| `Docker is not running …` | Ask the user to start Docker Desktop. |
-| `port 3330/5330 is in use by pid …` | Another process holds the port. If it is a stale Drum Tutor run, use `scripts/dev-stop.sh`. Otherwise ask the user; never kill it yourself. |
+| Message                                                   | Meaning / what to do                                                                                                                                                                          |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Node 24 is not installed. Run: nvm install`              | Ask the user to run `nvm install` in the repo.                                                                                                                                                |
+| `nvm not found …`                                         | nvm is missing. Ask the user to install it (see README).                                                                                                                                      |
+| `pnpm is not available …`                                 | Ask the user to run `nvm use && corepack enable`.                                                                                                                                             |
+| `Docker is not running …`                                 | Ask the user to start Docker Desktop.                                                                                                                                                         |
+| `port 3330/5330 is in use by pid …`                       | Another process holds the port. If it is a stale Drum Tutor run, use `scripts/dev-stop.sh`. Otherwise ask the user; never kill it yourself.                                                   |
 | `failed: pnpm dev exited early` / `not healthy after 90s` | Read the printed log tail (full log in `.dev/dev.log`) and fix the cause. A database port clash shows up as a `db:up` error: set `POSTGRES_PORT` and `DATABASE_URL` in `.env` to a free port. |

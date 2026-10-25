@@ -1,7 +1,6 @@
 # Project Foundation Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
-
 - **Status:** done
 
 **Goal:** A pnpm/Turborepo monorepo that runs locally end to end (PostgreSQL in Docker, Fastify API, React SPA), with email login, a type-safe Zod contract, tests, a verified README and a `local-dev` agent skill.
@@ -26,24 +25,24 @@
 
 **Pinned versions** (checked against the npm registry on 2026-10-25):
 
-| Package | Version | Package | Version |
-|---|---|---|---|
-| pnpm | 12.15.0 | turbo | 2.11.10 |
-| typescript | 7.0.2 ¹ | @biomejs/biome | 2.6.3 |
-| @types/node | 24.19.2 | tsx | 4.23.15 |
-| vitest | 5.0.5 | zod | 4.6.7 |
-| fastify | 5.12.7 | fastify-plugin | 6.0.1 |
-| @fastify/cookie | 11.1.3 | @fastify/swagger | 9.9.2 |
-| @fastify/swagger-ui | 6.1.2 | fastify-type-provider-zod | 7.0.0 |
-| openapi-types | 12.1.3 | drizzle-orm | 0.45.4 |
-| drizzle-kit | 0.31.11 | pg / @types/pg | 8.23.1 / 8.23.1 |
-| @testcontainers/postgresql | 12.2.1 | react / react-dom | 19.3.1 / 19.3.1 |
-| @types/react / @types/react-dom | 19.3.0 / 19.3.0 | vite | 8.3.5 |
-| @vitejs/plugin-react | 6.1.2 | @tanstack/react-router | 1.170.46 |
-| @tanstack/router-plugin | 1.168.48 | @tanstack/react-query | 5.104.5 |
-| @tanstack/react-form | 1.33.5 | sonner | 2.0.8 |
-| tailwindcss / @tailwindcss/vite | 4.3.3 / 4.3.3 | shadcn (CLI, via `pnpm dlx`) | 4.22.1 |
-| Docker image | `postgres:18.6-alpine` | | |
+| Package                         | Version                | Package                      | Version         |
+| ------------------------------- | ---------------------- | ---------------------------- | --------------- |
+| pnpm                            | 12.15.0                | turbo                        | 2.11.10         |
+| typescript                      | 7.0.2 ¹                | @biomejs/biome               | 2.6.3           |
+| @types/node                     | 24.19.2                | tsx                          | 4.23.15         |
+| vitest                          | 5.0.5                  | zod                          | 4.6.7           |
+| fastify                         | 5.12.7                 | fastify-plugin               | 6.0.1           |
+| @fastify/cookie                 | 11.1.3                 | @fastify/swagger             | 9.9.2           |
+| @fastify/swagger-ui             | 6.1.2                  | fastify-type-provider-zod    | 7.0.0           |
+| openapi-types                   | 12.1.3                 | drizzle-orm                  | 0.45.4          |
+| drizzle-kit                     | 0.31.11                | pg / @types/pg               | 8.23.1 / 8.23.1 |
+| @testcontainers/postgresql      | 12.2.1                 | react / react-dom            | 19.3.1 / 19.3.1 |
+| @types/react / @types/react-dom | 19.3.0 / 19.3.0        | vite                         | 8.3.5           |
+| @vitejs/plugin-react            | 6.1.2                  | @tanstack/react-router       | 1.170.46        |
+| @tanstack/router-plugin         | 1.168.48               | @tanstack/react-query        | 5.104.5         |
+| @tanstack/react-form            | 1.33.5                 | sonner                       | 2.0.8           |
+| tailwindcss / @tailwindcss/vite | 4.3.3 / 4.3.3          | shadcn (CLI, via `pnpm dlx`) | 4.22.1          |
+| Docker image                    | `postgres:18.6-alpine` |                              |                 |
 
 ¹ TypeScript 7 is the native compiler. If a tool in this stack fails against it, fall back to `6.0.3` everywhere and report it. Do not mix versions.
 
@@ -127,7 +126,9 @@ describe("LoginRequestSchema", () => {
 });
 describe("ApiErrorSchema", () => {
   it("accepts an error without details", () => {
-    expect(ApiErrorSchema.safeParse({ error: { code: "NOT_FOUND", message: "Not found" } }).success).toBe(true);
+    expect(
+      ApiErrorSchema.safeParse({ error: { code: "NOT_FOUND", message: "Not found" } }).success,
+    ).toBe(true);
   });
 });
 ```
@@ -356,14 +357,13 @@ it("OpenAPI document lists the auth paths", …);
 
 UI copy (exact):
 
-| Element | Copy |
-|---|---|
-| Login page heading | "Drum Tutor" |
-| Email label | "Email" |
-| Login button | "Log in" |
-| Placeholder text | "Logged in as {email}" |
-| Logout button | "Log out" |
-
+| Element            | Copy                   |
+| ------------------ | ---------------------- |
+| Login page heading | "Drum Tutor"           |
+| Email label        | "Email"                |
+| Login button       | "Log in"               |
+| Placeholder text   | "Logged in as {email}" |
+| Logout button      | "Log out"              |
 - [x] **Step 1: Implement `auth.api.ts`, `LoginForm` and the three routes.**
   - `LoginForm` uses `useForm` with `validators: { onSubmit: LoginRequestSchema }` and a field-level `onBlur: EmailSchema`.
   - While `mutation.isPending`, the field and the button are disabled, and the button shows a spinning `Loader2` icon next to its text.
