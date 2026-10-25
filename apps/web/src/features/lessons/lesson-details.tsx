@@ -5,6 +5,7 @@ import { QueryError } from "@/components/query-error";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PracticePanel } from "@/features/practice/practice-panel";
 import { ApiClientError } from "@/lib/api-client";
 import { formatDuration } from "./duration";
 import { formatDifficulty } from "./format";
@@ -86,9 +87,7 @@ export function LessonDetails({ id }: { id: string }) {
       <div className="flex h-40 items-center justify-center rounded-xl border border-dashed text-muted-foreground">
         Sheet coming soon
       </div>
-      <Button disabled className="justify-self-start">
-        Start
-      </Button>
+      <PracticePanel lesson={data} />
     </div>
   );
 }

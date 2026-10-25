@@ -126,6 +126,45 @@ Empty database (run this last, it wipes data):
 
 14. `scripts/dev-stop.sh`, `scripts/with-node.sh pnpm db:reset`, `scripts/dev-start.sh`, log in again (reset deletes users). Expect "0 lessons" and "No lessons yet". Run `scripts/with-node.sh pnpm db:seed` afterwards.
 
+## Practice flows (e2e)
+
+The practice panel lives on `/lessons/<id>` (spec `practice-and-stats` §6.2). The metronome is sound only, so checks read the scheduled clicks instead of listening. Seed first and log in. Before opening a lesson, install this recorder with `browser_run_code_unsafe` (it applies to every later navigation in that page):
+
+```js
+await page.addInitScript(() => {
+  window.__clicks = [];
+  window.__contexts = 0;
+  const Original = window.AudioContext;
+  window.AudioContext = class extends Original {
+    constructor(...args) {
+      super(...args);
+      window.__contexts++;
+    }
+  };
+  const start = OscillatorNode.prototype.start;
+  OscillatorNode.prototype.start = function (when) {
+    window.__clicks.push({ when, frequency: this.frequency.value });
+    return start.call(this, when);
+  };
+});
+```
+
+Accented clicks are 1500 Hz, the others 1000 Hz. To fake a hidden page, run `Object.defineProperty(document, "visibilityState", { value: "hidden", configurable: true }); document.dispatchEvent(new Event("visibilitychange"))`, and set it back to `"visible"` afterwards. `scripts/with-node.sh pnpm db:seed` restores the seed afterwards.
+
+1. Defaults: tempo and duration equal the lesson's recommendation. "Decrease duration by 30 seconds" stops at 00:30. Tempo `320` shows "Tempo must be between 30 and 300 BPM" and disables Start.
+2. Count-in: at 120 BPM, Start gives 4 count-in clicks 0.5 s apart (the first at 1500 Hz), then exercise clicks 0.5 s apart with 1500 Hz on every 4th. While counting in, "Count-in" shows with the full duration. There is no beat indicator anywhere.
+3. Stop during play: setup is back, `__clicks` stops growing and there is no `POST /api/practice-logs`.
+4. Double-click Start: `__contexts` grows by exactly 1.
+5. Completion: a 0:30 session ends with "Completed — 0:30 at <bpm> BPM logged.", one `POST` with 201, and 4 + 60 clicks at 120 BPM. `GET /api/stats/daily` for one of the lesson's tags shows the 30 s today. "Practice again" keeps tempo and duration.
+6. Hidden page during play: setup with "Session stopped because the app was in the background. Nothing was logged.", clicks stop and there is no `POST`.
+7. Reload during play: no `POST`, and the page is in setup after the reload.
+8. Leaving during play ("‹ Back to library", or moving to another lesson's URL): clicks stop at once, and the other lesson starts in setup with its own defaults.
+9. Save failure: `page.route('**/api/practice-logs', r => r.abort())` before a 0:30 session ends. Expect "Completed, but your session isn't saved yet. Retrying…" with attempts about 1 s, 2 s and 4 s apart. Hiding the page keeps that state. "‹ Back to library" opens "Your session isn't saved yet. Leave anyway?", and "Stay" keeps the page. After `page.unroute(…)`, "Retry now" gives 201 and the saved message, with the tag's seconds for today up by exactly the session length (one log).
+   9b. Real offline drop: open the library first (route chunks do not load offline in dev), then a lesson. Start a 0:30 session and call `page.context().setOffline(true)` just before it ends. Expect the retry state, not a stuck "Saving your session…". "Leave", then `setOffline(false)`: no `POST /api/practice-logs` follows.
+10. Leave while unsaved: in the retry state, "Leave" navigates away and no `POST` follows in the next 10 s.
+11. Rejected save: in the retry state, set the lesson to draft with `docker compose exec -T postgres psql -U drum -d drum_tutor -c "update lessons set status = 'draft' where id = '<id>'"`, unroute and click "Retry now". Expect 404 and "Your session couldn't be saved: This lesson is no longer available.". Set it back to `published`.
+12. Lost session while saving: in the retry state, `page.context().clearCookies()`, unroute and click "Retry now". Expect a 401 and a redirect to `/login` without the leave dialog.
+
 ## Troubleshooting (`dev-start.sh` messages)
 
 | Message                                                   | Meaning / what to do                                                                                                                                                                          |
