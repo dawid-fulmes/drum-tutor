@@ -105,40 +105,42 @@ Created only when an exercise runs to the end. Contains:
 
 ## 5. User stories
 
+A checked story is implemented and verified end to end. The scope that delivered it is listed in [docs/specs/](specs/README.md) (US-1: `project-foundation`).
+
 ### 5.1 Identification
 
-- **US-1** As a drummer, I enter my email and get into the app; if I am new, my account is created automatically.
+- [x] **US-1** As a drummer, I enter my email and get into the app; if I am new, my account is created automatically.
 
 ### 5.2 Library
 
-- **US-2** As a drummer, I browse the **paginated** list of lessons. Each item shows: name, difficulty, tags, average rating with rating count, recommended tempo and duration. Filters and sorting apply to the whole result set, not only the current page.
-- **US-3** As a drummer, I filter by tags. Selecting multiple tags **narrows** the results: a lesson must have **all** selected tags.
-- **US-4** As a drummer, I filter by difficulty. I can select one or more levels; a lesson matching **any** selected level is shown.
-- **US-5** As a drummer, I sort by creation date (newest / oldest) or by average rating. Lessons with no ratings go last when sorting by rating.
+- [ ] **US-2** As a drummer, I browse the **paginated** list of lessons. Each item shows: name, difficulty, tags, average rating with rating count, recommended tempo and duration. Filters and sorting apply to the whole result set, not only the current page.
+- [ ] **US-3** As a drummer, I filter by tags. Selecting multiple tags **narrows** the results: a lesson must have **all** selected tags.
+- [ ] **US-4** As a drummer, I filter by difficulty. I can select one or more levels; a lesson matching **any** selected level is shown.
+- [ ] **US-5** As a drummer, I sort by creation date (newest / oldest) or by average rating. Lessons with no ratings go last when sorting by rating.
 
 ### 5.3 Lesson start screen
 
-- **US-6** As a drummer, I open a lesson and see its name, description, difficulty, tags, rating and the signature rendered from its configuration.
-- **US-7** As a drummer, before starting, I can change the tempo and the duration (pre-filled with the recommended values, within the allowed ranges).
+- [ ] **US-6** As a drummer, I open a lesson and see its name, description, difficulty, tags, rating and the signature rendered from its configuration.
+- [ ] **US-7** As a drummer, before starting, I can change the tempo and the duration (pre-filled with the recommended values, within the allowed ranges).
 
 ### 5.4 Practice session
 
-- **US-8** As a drummer, I press play and hear **4 count-in clicks** at the chosen tempo; the count-in does not count toward the exercise duration.
-- **US-9** During the exercise I hear a metronome click on **every quarter note**, with an **accent on beat 1**, and see a timer counting the chosen duration.
-- **US-10** I can **stop** the exercise at any time. A stopped exercise is not completed and **nothing is logged**. There is no pause.
-- **US-11** When the timer reaches the end, the exercise ends automatically, counts as **completed**, and a practice log is saved (lesson, duration in seconds, tempo, completion timestamp).
-- **US-11a** If the session is interrupted in a way that stops the metronome (the user leaves the app / tab, the screen locks, the app is closed), it is treated as **stopped** and nothing is logged. _(Claude's call.)_
-- **US-11b** If saving the log of a completed exercise fails (e.g. no connection), the user is told and the save is retried until it succeeds, without creating duplicate logs. _(Claude's call.)_
+- [ ] **US-8** As a drummer, I press play and hear **4 count-in clicks** at the chosen tempo; the count-in does not count toward the exercise duration.
+- [ ] **US-9** During the exercise I hear a metronome click on **every quarter note**, with an **accent on beat 1**, and see a timer counting the chosen duration.
+- [ ] **US-10** I can **stop** the exercise at any time. A stopped exercise is not completed and **nothing is logged**. There is no pause.
+- [ ] **US-11** When the timer reaches the end, the exercise ends automatically, counts as **completed**, and a practice log is saved (lesson, duration in seconds, tempo, completion timestamp).
+- [ ] **US-11a** If the session is interrupted in a way that stops the metronome (the user leaves the app / tab, the screen locks, the app is closed), it is treated as **stopped** and nothing is logged. _(Claude's call.)_
+- [ ] **US-11b** If saving the log of a completed exercise fails (e.g. no connection), the user is told and the save is retried until it succeeds, without creating duplicate logs. _(Claude's call.)_
 
 ### 5.5 Rating
 
-- **US-12** As a drummer who has never completed a lesson, I see the rating control **disabled**, with a call to action to try the lesson first.
-- **US-13** As a drummer who has completed a lesson at least once, the rating control is active; I can rate 1–5 and change my rating later.
+- [ ] **US-12** As a drummer who has never completed a lesson, I see the rating control **disabled**, with a call to action to try the lesson first.
+- [ ] **US-13** As a drummer who has completed a lesson at least once, the rating control is active; I can rate 1–5 and change my rating later.
 
 ### 5.6 Statistics
 
-- **US-14** As a drummer, I pick a **tag** and a **period** (week, month or year) and see a chart of **minutes practiced per day** for that tag in that period.
-- **US-15** I can page to the previous / next period to follow my progress over consecutive weeks, months or years.
+- [ ] **US-14** As a drummer, I pick a **tag** and a **period** (week, month or year) and see a chart of **minutes practiced per day** for that tag in that period.
+- [ ] **US-15** I can page to the previous / next period to follow my progress over consecutive weeks, months or years.
 - Rules:
   - A practice log counts the **full duration** toward **every** tag of its lesson (so the sum over tags may exceed the real total practice time — this is intended).
   - Days without practice show 0.
@@ -146,11 +148,11 @@ Created only when an exercise runs to the end. Contains:
 
 ### 5.7 Admin panel (`/admin`)
 
-- **US-16** As an admin, I manage the tag dictionary: add tags, rename tags (always allowed), delete tags (only when not assigned to any lesson). Tag names are unique.
-- **US-17** As an admin, I create a lesson with all properties from 4.1, including building the 8-slot signature (instruments + comment per slot). A new lesson starts as a **draft**, invisible to drummers, which I can freely edit or delete.
-- **US-17a** As an admin, I **publish** a draft to make it visible in the library. As long as nobody has completed the lesson yet, I can move it back to **draft**; once it has at least one practice log, it stays published.
-- **US-18** As an admin, I can edit or delete a lesson **only if no user has completed it yet**. Once at least one practice log exists, the lesson is locked (this keeps historical statistics stable).
-- **US-19** As an admin, I see the list of lessons with their status (draft / published) and can tell which ones are locked.
+- [ ] **US-16** As an admin, I manage the tag dictionary: add tags, rename tags (always allowed), delete tags (only when not assigned to any lesson). Tag names are unique.
+- [ ] **US-17** As an admin, I create a lesson with all properties from 4.1, including building the 8-slot signature (instruments + comment per slot). A new lesson starts as a **draft**, invisible to drummers, which I can freely edit or delete.
+- [ ] **US-17a** As an admin, I **publish** a draft to make it visible in the library. As long as nobody has completed the lesson yet, I can move it back to **draft**; once it has at least one practice log, it stays published.
+- [ ] **US-18** As an admin, I can edit or delete a lesson **only if no user has completed it yet**. Once at least one practice log exists, the lesson is locked (this keeps historical statistics stable).
+- [ ] **US-19** As an admin, I see the list of lessons with their status (draft / published) and can tell which ones are locked.
 
 ## 6. Business rules summary
 
