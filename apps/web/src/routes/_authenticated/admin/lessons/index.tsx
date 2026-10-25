@@ -28,17 +28,19 @@ function NewLessonButton() {
 function AdminLessonsPage() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
-  const lessons = useQuery({
-    ...adminLessonsQueryOptions(search),
-    placeholderData: (prev) => prev,
-  });
+  const lessons = useQuery(adminLessonsQueryOptions(search));
   const totalPages = lessons.data?.totalPages ?? 0;
 
   useEffect(() => {
-    if (totalPages > 0 && search.page > totalPages) {
+    if (
+      lessons.isSuccess &&
+      !lessons.isPlaceholderData &&
+      totalPages > 0 &&
+      search.page > totalPages
+    ) {
       void navigate({ search: (prev) => ({ ...prev, page: totalPages }), replace: true });
     }
-  }, [totalPages, search.page, navigate]);
+  }, [lessons.isSuccess, lessons.isPlaceholderData, totalPages, search.page, navigate]);
 
   return (
     <div className="grid gap-6">
