@@ -6,6 +6,7 @@ import {
 } from "@drum-tutor/contracts";
 import { useForm } from "@tanstack/react-form";
 import { Loader2 } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { TextField } from "@/components/text-field";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -58,6 +59,11 @@ export function LessonForm({
     onSubmit: ({ value }) => onSubmit(LessonInputSchema.parse(value)),
   });
   const locked = disabled || pending;
+  // Validation is async, so `pending` lags behind a fast double click.
+  const submitting = useRef(false);
+  useEffect(() => {
+    if (!pending) submitting.current = false;
+  }, [pending]);
 
   return (
     <form
@@ -66,7 +72,11 @@ export function LessonForm({
       onSubmit={(event) => {
         event.preventDefault();
         event.stopPropagation();
-        void form.handleSubmit();
+        if (locked || submitting.current) return;
+        submitting.current = true;
+        void form.handleSubmit().finally(() => {
+          if (!form.state.isValid) submitting.current = false;
+        });
       }}
     >
       <form.Field name="name" validators={{ onBlur: shape.name }}>

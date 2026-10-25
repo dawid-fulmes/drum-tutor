@@ -1,7 +1,7 @@
 import type { AdminLessonSummary } from "@drum-tutor/contracts";
 import { Link } from "@tanstack/react-router";
 import { Ellipsis, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +28,13 @@ export function LessonRowActions({ lesson }: { lesson: AdminLessonSummary }) {
   const remove = useDeleteLesson();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const pending = publish.isPending || unpublish.isPending;
+  // `isPending` lags a render behind `mutate`, so a fast double click needs a synchronous guard.
+  const inFlight = useRef(false);
+  const once = (mutate: (options: { onSettled: () => void }) => void) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    mutate({ onSettled: () => (inFlight.current = false) });
+  };
 
   return (
     <>
@@ -54,9 +61,16 @@ export function LessonRowActions({ lesson }: { lesson: AdminLessonSummary }) {
             </DropdownMenuItem>
           )}
           {lesson.status === "draft" ? (
-            <DropdownMenuItem onSelect={() => publish.mutate(lesson.id)}>Publish</DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => once((options) => publish.mutate(lesson.id, options))}
+            >
+              Publish
+            </DropdownMenuItem>
           ) : (
-            <DropdownMenuItem disabled={lesson.locked} onSelect={() => unpublish.mutate(lesson.id)}>
+            <DropdownMenuItem
+              disabled={lesson.locked}
+              onSelect={() => once((options) => unpublish.mutate(lesson.id, options))}
+            >
               Move to draft
             </DropdownMenuItem>
           )}
@@ -84,10 +98,13 @@ export function LessonRowActions({ lesson }: { lesson: AdminLessonSummary }) {
               disabled={remove.isPending}
               onClick={(event) => {
                 event.preventDefault();
-                remove.mutate(lesson.id, {
-                  onSuccess: () => setConfirmOpen(false),
-                  onError: () => setConfirmOpen(false),
-                });
+                once((options) =>
+                  remove.mutate(lesson.id, {
+                    ...options,
+                    onSuccess: () => setConfirmOpen(false),
+                    onError: () => setConfirmOpen(false),
+                  }),
+                );
               }}
             >
               {remove.isPending ? <Loader2 className="animate-spin" aria-hidden /> : null}

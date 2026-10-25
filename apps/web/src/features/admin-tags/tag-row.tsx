@@ -1,7 +1,7 @@
 import { type AdminTag, TagNameSchema } from "@drum-tutor/contracts";
 import { useForm } from "@tanstack/react-form";
 import { Check, Loader2, Pencil, Trash2, X } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -111,6 +111,8 @@ function RenameForm({ tag, onDone }: RenameFormProps) {
 
 function DeleteButton({ tag }: { tag: AdminTag }) {
   const remove = useDeleteTag();
+  // `isPending` lags a render behind `mutate`, so a fast double click needs a synchronous guard.
+  const inFlight = useRef(false);
   const [open, setOpen] = useState(false);
 
   if (tag.lessonCount > 0) {
@@ -154,7 +156,10 @@ function DeleteButton({ tag }: { tag: AdminTag }) {
             disabled={remove.isPending}
             onClick={(event) => {
               event.preventDefault();
+              if (inFlight.current) return;
+              inFlight.current = true;
               remove.mutate(tag.id, {
+                onSettled: () => (inFlight.current = false),
                 onSuccess: () => setOpen(false),
                 onError: () => setOpen(false),
               });
