@@ -17,7 +17,7 @@ function DrummerShell() {
         <div className="mx-auto flex max-w-5xl items-center gap-6 p-4">
           <span className="font-semibold">Drum Tutor</span>
           <nav className="flex flex-1 items-center gap-4 text-sm">
-            <Link to="/" className="text-muted-foreground [&.active]:text-foreground">
+            <Link to="/lessons" className="text-muted-foreground [&.active]:text-foreground">
               Library
             </Link>
           </nav>

@@ -16,6 +16,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/_app/index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAdminTagsRouteImport } from './routes/_authenticated/admin/tags'
+import { Route as AuthenticatedAppLessonsIndexRouteImport } from './routes/_authenticated/_app/lessons/index'
 import { Route as AuthenticatedAdminLessonsIndexRouteImport } from './routes/_authenticated/admin/lessons/index'
 import { Route as AuthenticatedAdminLessonsNewRouteImport } from './routes/_authenticated/admin/lessons/new'
 import { Route as AuthenticatedAdminLessonsLessonIdEditRouteImport } from './routes/_authenticated/admin/lessons/$lessonId.edit'
@@ -53,6 +54,12 @@ const AuthenticatedAdminTagsRoute = AuthenticatedAdminTagsRouteImport.update({
   path: '/tags',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAppLessonsIndexRoute =
+  AuthenticatedAppLessonsIndexRouteImport.update({
+    id: '/lessons/',
+    path: '/lessons/',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAdminLessonsIndexRoute =
   AuthenticatedAdminLessonsIndexRouteImport.update({
     id: '/lessons/',
@@ -79,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/admin/tags': typeof AuthenticatedAdminTagsRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/lessons/new': typeof AuthenticatedAdminLessonsNewRoute
+  '/lessons/': typeof AuthenticatedAppLessonsIndexRoute
   '/admin/lessons/': typeof AuthenticatedAdminLessonsIndexRoute
   '/admin/lessons/$lessonId/edit': typeof AuthenticatedAdminLessonsLessonIdEditRoute
 }
@@ -88,6 +96,7 @@ export interface FileRoutesByTo {
   '/admin/tags': typeof AuthenticatedAdminTagsRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/lessons/new': typeof AuthenticatedAdminLessonsNewRoute
+  '/lessons': typeof AuthenticatedAppLessonsIndexRoute
   '/admin/lessons': typeof AuthenticatedAdminLessonsIndexRoute
   '/admin/lessons/$lessonId/edit': typeof AuthenticatedAdminLessonsLessonIdEditRoute
 }
@@ -101,6 +110,7 @@ export interface FileRoutesById {
   '/_authenticated/_app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/lessons/new': typeof AuthenticatedAdminLessonsNewRoute
+  '/_authenticated/_app/lessons/': typeof AuthenticatedAppLessonsIndexRoute
   '/_authenticated/admin/lessons/': typeof AuthenticatedAdminLessonsIndexRoute
   '/_authenticated/admin/lessons/$lessonId/edit': typeof AuthenticatedAdminLessonsLessonIdEditRoute
 }
@@ -113,6 +123,7 @@ export interface FileRouteTypes {
     | '/admin/tags'
     | '/admin/'
     | '/admin/lessons/new'
+    | '/lessons/'
     | '/admin/lessons/'
     | '/admin/lessons/$lessonId/edit'
   fileRoutesByTo: FileRoutesByTo
@@ -122,6 +133,7 @@ export interface FileRouteTypes {
     | '/admin/tags'
     | '/admin'
     | '/admin/lessons/new'
+    | '/lessons'
     | '/admin/lessons'
     | '/admin/lessons/$lessonId/edit'
   id:
@@ -134,6 +146,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_app/'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/lessons/new'
+    | '/_authenticated/_app/lessons/'
     | '/_authenticated/admin/lessons/'
     | '/_authenticated/admin/lessons/$lessonId/edit'
   fileRoutesById: FileRoutesById
@@ -194,6 +207,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminTagsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/_app/lessons/': {
+      id: '/_authenticated/_app/lessons/'
+      path: '/lessons'
+      fullPath: '/lessons/'
+      preLoaderRoute: typeof AuthenticatedAppLessonsIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/admin/lessons/': {
       id: '/_authenticated/admin/lessons/'
       path: '/lessons'
@@ -220,10 +240,12 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAppRouteChildren {
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
+  AuthenticatedAppLessonsIndexRoute: typeof AuthenticatedAppLessonsIndexRoute
 }
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
+  AuthenticatedAppLessonsIndexRoute: AuthenticatedAppLessonsIndexRoute,
 }
 
 const AuthenticatedAppRouteWithChildren =

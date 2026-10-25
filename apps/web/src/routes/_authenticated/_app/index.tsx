@@ -1,13 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/_app/")({
-  component: HomePage,
+  beforeLoad: () => {
+    throw redirect({ to: "/lessons", replace: true });
+  },
 });
-
-function HomePage() {
-  return (
-    <main className="mx-auto max-w-5xl p-6">
-      <p>Library coming soon.</p>
-    </main>
-  );
-}
