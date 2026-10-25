@@ -49,6 +49,12 @@ scripts/with-node.sh pnpm db:reset
 scripts/dev-start.sh
 ```
 
+For demo data (6 tags, 18 lessons, one practice log), run the seed after the reset. It replaces all lessons, tags and practice logs and keeps users, so it also works on a database that already has data:
+
+```bash
+scripts/with-node.sh pnpm db:seed
+```
+
 ## Driving the UI with the Playwright plugin (e2e checks)
 
 There is no committed Playwright suite yet (ADR-0027). UI checks use the Playwright plugin / MCP tools (`mcp__plugin_playwright_playwright__*`). If those tools are not available in your session, say so to the user. Do not switch to another browser tool or install Playwright into the repo.

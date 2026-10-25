@@ -9,6 +9,7 @@
   "scripts": {
     "generate": "drizzle-kit generate",
     "migrate": "tsx src/migrate-cli.ts",
+    "seed": "tsx src/seed-cli.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

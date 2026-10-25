@@ -16,6 +16,7 @@
     "db:down": "docker compose down",
     "db:reset": "docker compose down -v && docker compose up -d --wait && pnpm db:migrate",
     "db:migrate": "pnpm --filter @drum-tutor/db migrate",
+    "db:seed": "pnpm --filter @drum-tutor/db seed",
     "db:generate": "pnpm --filter @drum-tutor/db generate",
     "dev:start": "./scripts/dev-start.sh",
     "dev:stop": "./scripts/dev-stop.sh"

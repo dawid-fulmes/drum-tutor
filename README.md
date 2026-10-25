@@ -68,6 +68,7 @@ The ports are deliberately non-standard so that they don't clash with other loca
 | `pnpm db:down`     | Stop the database container (data kept)                                              |
 | `pnpm db:reset`    | Drop all data, start fresh and migrate                                               |
 | `pnpm db:migrate`  | Apply Drizzle migrations                                                             |
+| `pnpm db:seed`     | Replace lessons and tags with demo data (users are kept)                             |
 | `pnpm db:generate` | Generate a migration from schema changes in `packages/db/src/schema.ts`              |
 | `pnpm lint`        | Lint and format check (Biome)                                                        |
 | `pnpm format`      | Format and apply safe fixes (Biome)                                                  |
@@ -101,6 +102,14 @@ MVP data is disposable ([ADR-0004](docs/adr/0004-disposable-mvp-data.md)):
 ```bash
 pnpm db:reset
 ```
+
+This gives an empty, migrated database. To fill the library with demo data (6 tags, 18 lessons, one practice log), run the seed afterwards:
+
+```bash
+pnpm db:seed
+```
+
+`db:seed` can also run on a database that already has data: it deletes all lessons, tags and practice logs first, keeps users, and loads the demo set again.
 
 If you were logged in, reload the page: the app finds that your user is gone and sends you back to the login screen.
 
