@@ -2,6 +2,7 @@ import type { LessonSummary } from "@drum-tutor/contracts";
 import { Link } from "@tanstack/react-router";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatRating } from "@/features/rating/format-rating";
 import { formatDuration } from "./duration";
 import { formatDifficulty } from "./format";
 import type { LibrarySearch } from "./library-search";
@@ -12,6 +13,7 @@ type LessonCardProps = {
 };
 
 export function LessonCard({ lesson, librarySearch }: LessonCardProps) {
+  const rating = formatRating(lesson.rating, "card");
   return (
     <Link
       to="/lessons/$lessonId"
@@ -34,6 +36,10 @@ export function LessonCard({ lesson, librarySearch }: LessonCardProps) {
           </div>
           <p className="text-sm text-muted-foreground">
             {lesson.recommendedTempoBpm} BPM · {formatDuration(lesson.recommendedDurationSeconds)}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            <span aria-hidden>{rating.text}</span>
+            <span className="sr-only">{rating.label}</span>
           </p>
         </CardContent>
       </Card>

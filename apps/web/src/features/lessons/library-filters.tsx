@@ -10,7 +10,7 @@ import {
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { TagPicker } from "@/features/tags/tag-picker";
 import { formatDifficulty } from "./format";
-import { hasActiveFilters, type LibrarySearch } from "./library-search";
+import { hasActiveFilters, LIBRARY_MAX_TAGS, type LibrarySearch } from "./library-search";
 
 type LibraryFiltersProps = {
   search: LibrarySearch;
@@ -21,7 +21,11 @@ type LibraryFiltersProps = {
 export function LibraryFilters({ search, onChange, onClear }: LibraryFiltersProps) {
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <TagPicker value={search.tagIds} onChange={(tagIds) => onChange({ tagIds })} />
+      <TagPicker
+        value={search.tagIds}
+        onChange={(tagIds) => onChange({ tagIds })}
+        max={LIBRARY_MAX_TAGS}
+      />
       <ToggleGroup
         type="multiple"
         variant="outline"
@@ -52,6 +56,7 @@ export function LibraryFilters({ search, onChange, onClear }: LibraryFiltersProp
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
+          <SelectItem value="rating">Highest rated</SelectItem>
           <SelectItem value="newest">Newest first</SelectItem>
           <SelectItem value="oldest">Oldest first</SelectItem>
         </SelectContent>

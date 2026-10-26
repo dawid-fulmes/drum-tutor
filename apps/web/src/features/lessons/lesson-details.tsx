@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PracticePanel } from "@/features/practice/practice-panel";
+import { LessonRatingRow } from "@/features/rating/lesson-rating-row";
 import { ApiClientError } from "@/lib/api-client";
 import { formatDuration } from "./duration";
 import { formatDifficulty } from "./format";
@@ -57,6 +58,7 @@ export function LessonDetails({ id }: { id: string }) {
         <BackToLibrary />
         <Skeleton className="h-8 w-2/3" />
         <Skeleton className="h-6 w-1/2" />
+        <Skeleton className="h-9 w-64" />
         <Skeleton className="h-5 w-40" />
         <Skeleton className="h-20 w-full" />
         <Skeleton className="h-40 w-full" />
@@ -79,6 +81,7 @@ export function LessonDetails({ id }: { id: string }) {
           </Badge>
         ))}
       </div>
+      <LessonRatingRow lesson={data} />
       <p className="text-sm text-muted-foreground">
         Recommended: {data.recommendedTempoBpm} BPM ·{" "}
         {formatDuration(data.recommendedDurationSeconds)}

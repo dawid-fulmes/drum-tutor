@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { PaginationBar } from "@/components/pagination-bar";
 import { QueryError } from "@/components/query-error";
 import { SelectedTags } from "@/features/tags/selected-tags";
@@ -20,6 +20,9 @@ export function LibraryPage() {
   const lessons = useQuery(libraryQueryOptions(search));
   const tags = useTagsByIds(search.tagIds);
   const totalPages = lessons.data?.totalPages ?? 0;
+  // The last known page count keeps the page links visible (but disabled) while a page loads.
+  const lastTotalPages = useRef(0);
+  if (lessons.data) lastTotalPages.current = lessons.data.totalPages;
 
   // Filters and sort always go back to the first page.
   const change = (patch: Partial<LibrarySearch>) =>
@@ -42,6 +45,27 @@ export function LibraryPage() {
     });
   }, [tags.isSuccess, tags.data, search.tagIds.length, navigate]);
 
+  // No data (loading) or no results: a disabled bar, so the layout does not jump.
+  const pager = (disabled: boolean, pages: number) => (
+    <PaginationBar
+      page={search.page}
+      totalPages={pages}
+      pageSize={search.pageSize}
+      pageSizes={LIBRARY_PAGE_SIZES}
+      disabled={disabled}
+      onPageChange={(page) => void navigate({ search: (prev) => ({ ...prev, page }) })}
+      onPageSizeChange={(pageSize) =>
+        void navigate({
+          search: (prev) => ({
+            ...prev,
+            pageSize: LIBRARY_PAGE_SIZES.find((size) => size === pageSize) ?? prev.pageSize,
+            page: 1,
+          }),
+        })
+      }
+    />
+  );
+
   return (
     <div className="grid gap-6">
       <h1 className="text-xl font-semibold">Library</h1>
@@ -60,14 +84,20 @@ export function LibraryPage() {
       {lessons.isError && !lessons.data ? (
         <QueryError error={lessons.error} onRetry={() => lessons.refetch()} />
       ) : !lessons.data ? (
-        <LessonGrid>
-          {Array.from({ length: search.pageSize }, (_, index) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: static placeholders without identity
-            <LessonCardSkeleton key={index} />
-          ))}
-        </LessonGrid>
+        <>
+          <LessonGrid>
+            {Array.from({ length: search.pageSize }, (_, index) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: static placeholders without identity
+              <LessonCardSkeleton key={index} />
+            ))}
+          </LessonGrid>
+          {pager(true, lastTotalPages.current)}
+        </>
       ) : lessons.data.totalItems === 0 ? (
-        <LibraryEmpty filtered={hasActiveFilters(search)} onClearFilters={clear} />
+        <>
+          <LibraryEmpty filtered={hasActiveFilters(search)} onClearFilters={clear} />
+          {pager(true, 0)}
+        </>
       ) : (
         <>
           <LessonGrid>
@@ -75,22 +105,7 @@ export function LibraryPage() {
               <LessonCard key={lesson.id} lesson={lesson} librarySearch={search} />
             ))}
           </LessonGrid>
-          <PaginationBar
-            page={search.page}
-            totalPages={totalPages}
-            pageSize={search.pageSize}
-            pageSizes={LIBRARY_PAGE_SIZES}
-            onPageChange={(page) => void navigate({ search: (prev) => ({ ...prev, page }) })}
-            onPageSizeChange={(pageSize) =>
-              void navigate({
-                search: (prev) => ({
-                  ...prev,
-                  pageSize: LIBRARY_PAGE_SIZES.find((size) => size === pageSize) ?? prev.pageSize,
-                  page: 1,
-                }),
-              })
-            }
-          />
+          {pager(false, totalPages)}
         </>
       )}
     </div>

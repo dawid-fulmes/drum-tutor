@@ -13,6 +13,7 @@ export function LessonCardSkeleton() {
           <Skeleton className="h-5 w-12" />
         </div>
         <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-4 w-20" />
       </CardContent>
     </Card>
   );

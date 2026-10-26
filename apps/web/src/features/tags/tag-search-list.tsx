@@ -24,6 +24,10 @@ type TagSearchListProps = {
   selectedIds: readonly string[];
   onSelect: (tag: Tag) => void;
   multiselect: boolean;
+  /** False once a selection cap is reached: unselected tags get disabled. */
+  canSelectMore?: boolean;
+  /** Shown under the input when `canSelectMore` is false. */
+  maxHint?: string;
 };
 
 /** Server-side tag search with infinite scroll (ADR-0033), shared by the tag pickers. */
@@ -33,6 +37,8 @@ export function TagSearchList({
   selectedIds,
   onSelect,
   multiselect,
+  canSelectMore = true,
+  maxHint,
 }: TagSearchListProps) {
   const [list, setList] = useState<HTMLDivElement | null>(null);
   const q = useDebouncedValue(input.trim(), 300);
@@ -47,6 +53,11 @@ export function TagSearchList({
         value={input}
         onValueChange={onInputChange}
       />
+      {!canSelectMore && maxHint && (
+        <p role="status" className="px-3 py-2 text-xs text-muted-foreground">
+          {maxHint}
+        </p>
+      )}
       <CommandList ref={setList} aria-multiselectable={multiselect || undefined}>
         {search.isPending ? (
           <div className="flex flex-col gap-2 p-2">
@@ -70,6 +81,7 @@ export function TagSearchList({
                     value={tag.id}
                     aria-checked={multiselect ? checked : undefined}
                     aria-selected={multiselect ? undefined : checked}
+                    disabled={!checked && !canSelectMore}
                     onSelect={() => onSelect(tag)}
                   >
                     {multiselect ? (

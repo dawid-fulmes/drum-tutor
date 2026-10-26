@@ -9,15 +9,19 @@ type TagPickerProps = {
   onChange: (ids: string[]) => void;
   disabled?: boolean;
   invalid?: boolean;
+  /** Selection cap; unselected tags are disabled once reached. No cap by default. */
+  max?: number;
 };
 
-export function TagPicker({ value, onChange, disabled, invalid }: TagPickerProps) {
+export function TagPicker({ value, onChange, disabled, invalid, max }: TagPickerProps) {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
 
   const toggle = (id: string) => {
     onChange(value.includes(id) ? value.filter((selected) => selected !== id) : [...value, id]);
   };
+
+  const canSelectMore = max === undefined || value.length < max;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -42,6 +46,8 @@ export function TagPicker({ value, onChange, disabled, invalid }: TagPickerProps
           selectedIds={value}
           onSelect={(tag) => toggle(tag.id)}
           multiselect
+          canSelectMore={canSelectMore}
+          maxHint={max === undefined ? undefined : `You can select up to ${max} tags`}
         />
       </PopoverContent>
     </Popover>

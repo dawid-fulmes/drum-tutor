@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hasActiveFilters, librarySearchSchema } from "./library-search";
+import { hasActiveFilters, LIBRARY_MAX_TAGS, librarySearchSchema } from "./library-search";
 
 const A = "6f1d3c1e-8a52-4b0e-9a55-0c2f2f0d7a11";
 
@@ -10,7 +10,7 @@ describe("librarySearchSchema", () => {
       pageSize: 12,
       tagIds: [],
       difficulties: [],
-      sort: "newest",
+      sort: "rating",
     });
   });
 
@@ -23,7 +23,11 @@ describe("librarySearchSchema", () => {
         sort: "best",
         tagIds: ["x"],
       }),
-    ).toEqual({ page: 1, pageSize: 12, tagIds: [], difficulties: [], sort: "newest" });
+    ).toEqual({ page: 1, pageSize: 12, tagIds: [], difficulties: [], sort: "rating" });
+  });
+
+  it("keeps an explicit sort", () => {
+    expect(librarySearchSchema.parse({ sort: "newest" }).sort).toBe("newest");
   });
 
   it("falls back to page 1 for page 0, negative and fractional values", () => {
@@ -42,9 +46,9 @@ describe("librarySearchSchema", () => {
     ).toMatchObject({ pageSize: 24, difficulties: ["beginner"], tagIds: [A] });
   });
 
-  it("falls back to no tags when more than 20 are given", () => {
+  it("falls back to no tags when more than the maximum are given", () => {
     const ids = Array.from(
-      { length: 21 },
+      { length: LIBRARY_MAX_TAGS + 1 },
       (_, i) => `6f1d3c1e-8a52-4b0e-9a55-0c2f2f0d70${String(i).padStart(2, "0")}`,
     );
     expect(librarySearchSchema.parse({ tagIds: ids }).tagIds).toEqual([]);
