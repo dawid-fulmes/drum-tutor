@@ -314,6 +314,7 @@ Used by the library filter and the lesson form.
 | Tags        | tag picker (§6.3), selected tags as removable Badges                                                                                                                  | none             |
 | Tempo       | Slider 30–300 step 1, kept in sync with a number Input next to it ("BPM"). An out-of-range typed value shows the schema error; the slider keeps the last valid value. | 60               |
 | Duration    | Read-only `MM:SS` display between a "−" and a "+" Button; each press changes the value by 30 s. "−" is disabled at 00:30, "+" at 60:00. **No typing.**                | 03:00            |
+
 - Field errors come from the contract schema and show under the field. While saving, fields and buttons are disabled and Save shows a spinner (foundation pattern).
 - **Create** → `POST`, success toast "Lesson created", navigate to `/admin/lessons`.
 - **Edit** loads `GET /api/admin/lessons/:id`. The page is reachable for a locked lesson only by typing its URL, since the menu item is disabled. If `locked`, an Alert "This lesson is locked — someone has already practiced it, so it can't be edited or deleted." appears above the form and every field and Save are disabled. A `409 LESSON_LOCKED` on save (the lesson got locked meanwhile) shows the global toast and refetches the lesson, which turns on the locked state.
@@ -409,3 +410,4 @@ When all plans are done, tick US-3, US-4, US-16, US-17a, US-18 and US-19 in the 
   - A Biome override relaxes lint rules for vendored shadcn files (ADR-0037).
   - Knowingly left admin UI gaps are tracked in ADR-0038.
 - 2026-10-25 — Knowingly left library UI gaps are tracked in ADR-0039.
+- 2026-10-26 — Superseded in part by [signature](../signature/spec.md) §6.2 and ADR-0053: publishing now requires a signature with at least one note, so the §5.3 rule "publishing does not require a signature" no longer holds.

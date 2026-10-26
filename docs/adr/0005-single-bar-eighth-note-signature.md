@@ -1,7 +1,7 @@
 # ADR-0005: Limit the exercise signature to one 4/4 bar of eighth notes and three instruments
 
 - **Type:** tech-debt
-- **Status:** open
+- **Status:** superseded by ADR-0051
 - **Date:** 2026-10-25
 - **Related:** PRD §4.2, non-goals; ADR-0016
 
