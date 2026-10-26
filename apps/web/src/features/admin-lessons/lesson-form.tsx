@@ -1,6 +1,7 @@
 import {
   DIFFICULTIES,
   type Difficulty,
+  EMPTY_SIGNATURE_V1,
   type LessonInput,
   LessonInputSchema,
 } from "@drum-tutor/contracts";
@@ -26,6 +27,7 @@ export const NEW_LESSON_DEFAULTS: LessonFormValues = {
   tagIds: [],
   recommendedTempoBpm: 60,
   recommendedDurationSeconds: 180,
+  signature: EMPTY_SIGNATURE_V1,
 };
 
 type LessonFormProps = {

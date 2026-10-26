@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { LessonInputSchema, LibraryQuerySchema } from "./lessons";
+import { EMPTY_SIGNATURE_V1 } from "./signature";
 
 const A = "11111111-1111-4111-8111-111111111111";
 const B = "22222222-2222-4222-8222-222222222222";
@@ -11,6 +12,7 @@ const base = {
   tagIds: [A],
   recommendedTempoBpm: 60,
   recommendedDurationSeconds: 180,
+  signature: EMPTY_SIGNATURE_V1,
 };
 
 const ok = (override: Record<string, unknown>) =>
@@ -61,6 +63,11 @@ describe("LessonInputSchema", () => {
     expect(firstMessage({ tagIds: eleven })).toBe("A lesson can have at most 10 tags");
     expect(firstMessage({ tagIds: [A, A] })).toBe("A tag can only be selected once");
     expect(LessonInputSchema.safeParse({ ...base, tagIds: [A, B] }).data?.tagIds).toEqual([A, B]);
+  });
+
+  it("requires a signature", () => {
+    const { signature: _, ...withoutSignature } = base;
+    expect(LessonInputSchema.safeParse(withoutSignature).success).toBe(false);
   });
 
   it("rejects an empty difficulty with 'Choose a difficulty'", () => {

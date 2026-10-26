@@ -4,6 +4,7 @@ import {
   date,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   primaryKey,
@@ -39,6 +40,15 @@ export const tags = pgTable(
   (t) => [uniqueIndex("tags_name_lower_unique").on(sql`lower(${t.name})`)],
 );
 
+/**
+ * The signature JSON (ADR-0050). Its shape is defined and validated only by `SignatureSchema` in
+ * @drum-tutor/contracts, which this package does not depend on.
+ */
+export type LessonSignatureJson = {
+  version: string;
+  slots: { instruments: string[]; comment: string }[];
+};
+
 export const lessons = pgTable(
   "lessons",
   {
@@ -49,6 +59,7 @@ export const lessons = pgTable(
     recommendedTempoBpm: integer("recommended_tempo_bpm").notNull(),
     recommendedDurationSeconds: integer("recommended_duration_seconds").notNull(),
     status: lessonStatus("status").notNull().default("draft"),
+    signature: jsonb("signature").$type<LessonSignatureJson>().notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

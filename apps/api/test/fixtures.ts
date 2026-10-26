@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { ApiPaths } from "@drum-tutor/contracts";
+import { ApiPaths, type Signature } from "@drum-tutor/contracts";
 import {
   type Database,
   type LessonRow,
@@ -17,6 +17,12 @@ import { eq } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 
 const SESSION_COOKIE = "dt_session";
+
+/** A signature with notes, so fixture lessons can be published (ADR-0053). */
+export const TEST_SIGNATURE: Signature = {
+  version: "v1",
+  slots: Array.from({ length: 8 }, () => ({ instruments: ["snare"], comment: "" })),
+};
 
 export async function loginCookies(
   app: FastifyInstance,
@@ -49,6 +55,7 @@ export async function insertLesson(
       recommendedTempoBpm: 60,
       recommendedDurationSeconds: 180,
       status: "draft",
+      signature: TEST_SIGNATURE,
       ...lessonValues,
     })
     .returning();

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { PaginationQuerySchema, queryArray } from "./pagination";
+import { SignatureSchema } from "./signature";
 import { TagSchema } from "./tags";
 
 export const DIFFICULTIES = ["beginner", "intermediate", "advanced"] as const;
@@ -49,6 +50,7 @@ export const LessonInputSchema = z.object({
     .refine((ids) => new Set(ids).size === ids.length, "A tag can only be selected once"),
   recommendedTempoBpm: TempoBpmSchema,
   recommendedDurationSeconds: DurationSecondsSchema,
+  signature: SignatureSchema,
 });
 export type LessonInput = z.input<typeof LessonInputSchema>;
 
@@ -63,7 +65,10 @@ export const LessonSummarySchema = z.object({
 });
 export type LessonSummary = z.infer<typeof LessonSummarySchema>;
 
-export const LessonDetailSchema = LessonSummarySchema.extend({ description: z.string() });
+export const LessonDetailSchema = LessonSummarySchema.extend({
+  description: z.string(),
+  signature: SignatureSchema,
+});
 export type LessonDetail = z.infer<typeof LessonDetailSchema>;
 
 const adminFields = { status: LessonStatusSchema, locked: z.boolean() };

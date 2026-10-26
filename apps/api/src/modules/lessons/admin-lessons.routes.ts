@@ -124,13 +124,14 @@ export const adminLessonsRoutes: FastifyPluginAsyncZod<{ db: Database }> = async
     {
       schema: {
         tags: ["admin-lessons"],
-        summary: "Publish a lesson (idempotent)",
+        summary: "Publish a lesson (idempotent); refused while the signature has no notes",
         params: IdParamsSchema,
         response: {
           200: AdminLessonSchema,
           400: ApiErrorSchema,
           401: ApiErrorSchema,
           404: ApiErrorSchema,
+          409: ApiErrorSchema,
         },
       },
     },

@@ -6,5 +6,6 @@ export * from "./lessons";
 export * from "./pagination";
 export * from "./paths";
 export * from "./practice-logs";
+export * from "./signature";
 export * from "./stats";
 export * from "./tags";

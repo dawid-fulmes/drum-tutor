@@ -10,6 +10,7 @@ import { and, asc, count, desc, eq, inArray, sql } from "drizzle-orm";
 import { pageOffset, toPage } from "../../lib/pagination";
 import { AppError } from "../../plugins/error-handler";
 import { loadTagsForLessons, toLessonSummary } from "./lesson-tags";
+import { toSignature } from "./signature";
 
 /**
  * Published lessons only (R11). The tag filter is an AND: a lesson must carry every selected tag,
@@ -64,5 +65,9 @@ export async function getPublishedLesson(db: Database, id: string): Promise<Less
     .where(and(eq(lessons.id, id), eq(lessons.status, "published")));
   if (!row) throw new AppError(404, ApiErrorCode.NOT_FOUND, "Lesson not found");
   const tagsByLesson = await loadTagsForLessons(db, [id]);
-  return { ...toLessonSummary(row, tagsByLesson.get(id) ?? []), description: row.description };
+  return {
+    ...toLessonSummary(row, tagsByLesson.get(id) ?? []),
+    description: row.description,
+    signature: toSignature(row.signature),
+  };
 }

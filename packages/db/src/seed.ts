@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { Database } from "./client";
-import { lessons, lessonTags, practiceLogs, tags, users } from "./schema";
+import { type LessonSignatureJson, lessons, lessonTags, practiceLogs, tags, users } from "./schema";
 
 type Difficulty = "beginner" | "intermediate" | "advanced";
 
@@ -22,192 +22,238 @@ type SeedLesson = {
   minutes: number;
   status: "draft" | "published";
   tags: TagName[];
+  signature: string;
 };
 
 // Ordered oldest to newest; created_at is derived from the index so every value is distinct.
+// `signature` uses the spec §5.1 grid notation, parsed by `signatureFromGrid`.
 const LESSONS: SeedLesson[] = [
   {
     name: "Single strokes on a pad",
     description:
-      "Alternate right and left hand evenly on a practice pad. Keep the sticks low and the rebound relaxed.",
+      "Alternate right and left hand evenly on the snare or a practice pad. Keep the sticks low and the rebound relaxed. Start slow and only speed up when both hands sound the same.",
     difficulty: "beginner",
     tempo: 60,
     minutes: 3,
     status: "published",
-    tags: ["Hand speed"],
+    tags: ["Hand speed", "Weak hand"],
+    signature: "S(R) S(L) S(R) S(L) S(R) S(L) S(R) S(L)",
   },
   {
     name: "Money beat",
     description:
-      "Eighth notes on the hi-hat, kick on 1 and 3, snare on 2 and 4. Play it until it feels automatic.",
+      "Eighth notes on the closed hi-hat, kick on 1 and 3, snare on 2 and 4. Keep the hi-hat even and let the snare sit on top. Play it until it feels automatic.",
     difficulty: "beginner",
     tempo: 80,
     minutes: 5,
     status: "published",
     tags: ["Groove"],
+    signature: "HK H HS H HK H HS H",
   },
   {
-    name: "Paradiddle accents",
+    name: "Single paradiddles",
     description:
-      "Play a single paradiddle and accent the first note of each group. Keep the unaccented notes quiet.",
+      "Play the sticking R L R R L R L L on the snare. The double strokes should sound as even as the singles. Practice slowly at first; the pattern switches lead hand every half bar.",
     difficulty: "intermediate",
     tempo: 90,
     minutes: 4,
     status: "published",
     tags: ["Rudiments", "Hand speed"],
+    signature: "S(R) S(L) S(R) S(R) S(L) S(R) S(L) S(L)",
   },
   {
     name: "Quarter-note kick control",
     description:
-      "Play steady quarter notes on the kick drum with the heel up. Aim for the same volume on every hit.",
+      "Play steady quarter notes on the kick drum with the heel up. Aim for the same volume on every hit and count the eighth-note rests out loud.",
     difficulty: "beginner",
     tempo: 70,
     minutes: 3,
     status: "published",
     tags: ["Kick drum foot"],
+    signature: "K - K - K - K -",
   },
   {
-    name: "Hi-hat foot chicks on 2 and 4",
+    name: "Four on the floor",
     description:
-      "Close the hi-hat with your foot on beats 2 and 4 while your hands rest, then add a ride pattern on top.",
+      "Kick on every quarter note, eighth notes on the closed hi-hat, snare on 2 and 4. This is the backbone of disco and dance music. Keep the kick steady and do not rush the backbeat.",
     difficulty: "beginner",
-    tempo: 65,
-    minutes: 3,
+    tempo: 100,
+    minutes: 4,
     status: "published",
-    tags: ["Hi-hat foot", "Groove"],
+    tags: ["Groove", "Kick drum foot"],
+    signature: "HK H HKS H HK H HKS H",
   },
   {
     name: "Weak hand eighth notes",
     description:
-      "Lead every eighth-note group with your weak hand on the snare. Keep the stroke height equal for both hands.",
+      "Play eighth notes on the snare with your weaker hand only. Watch the stick height and keep every stroke at the same volume. Rest when the forearm gets tense.",
     difficulty: "intermediate",
     tempo: 75,
     minutes: 5,
     status: "published",
     tags: ["Weak hand"],
+    signature: "S(L) S(L) S(L) S(L) S(L) S(L) S(L) S(L)",
   },
   {
-    name: "Double stroke roll ladder",
+    name: "Double strokes",
     description:
-      "Build a double stroke roll from slow to fast in four steps, holding each tempo for one bar.",
+      "Play R R L L on the snare. Let the second stroke of each double come from the rebound, not from the arm. Both notes of a double should be equally loud.",
     difficulty: "intermediate",
     tempo: 100,
     minutes: 6,
     status: "published",
     tags: ["Rudiments", "Hand speed", "Weak hand"],
+    signature: "S(R) S(R) S(L) S(L) S(R) S(R) S(L) S(L)",
   },
   {
-    name: "Sixteenth-note hi-hat groove",
+    name: "Inverted paradiddles",
     description:
-      "Play steady sixteenth notes on the hi-hat with the snare on 2 and 4 and a simple kick pattern.",
+      "Play the sticking R L L R L R R L on the snare. The doubles sit in the middle of each group, which makes it harder than the single paradiddle. Keep the tempo low until it flows.",
     difficulty: "intermediate",
     tempo: 85,
-    minutes: 5,
+    minutes: 4,
     status: "published",
-    tags: ["Groove", "Hi-hat foot"],
+    tags: ["Rudiments", "Weak hand"],
+    signature: "S(R) S(L) S(L) S(R) S(L) S(R) S(R) S(L)",
   },
   {
-    name: "Heel-toe kick doubles",
+    name: "Disco offbeat hi-hat",
     description:
-      "Play two kick notes in a row using the heel-toe motion. Start slowly and keep both notes even.",
-    difficulty: "advanced",
+      "Kick on every quarter note, snare on 2 and 4, and the closed hi-hat only on the 'and' of each beat. The hi-hat between the kicks gives the groove its lift. Keep the hi-hat crisp and short.",
+    difficulty: "intermediate",
     tempo: 110,
     minutes: 5,
     status: "published",
-    tags: ["Kick drum foot"],
+    tags: ["Groove", "Kick drum foot"],
+    signature: "K H KS H K H KS H",
   },
   {
-    name: "Flam taps",
+    name: "Rock beat with kick on 3&",
     description:
-      "Play flam taps between the hands with a clear, quiet grace note before each flam.",
-    difficulty: "intermediate",
-    tempo: 80,
-    minutes: 4,
-    status: "published",
-    tags: ["Rudiments"],
-  },
-  {
-    name: "Linear funk pattern",
-    description:
-      "No two limbs play at the same time. Count sixteenth notes out loud and keep the ghost notes soft.",
-    difficulty: "advanced",
-    tempo: 95,
-    minutes: 8,
-    status: "published",
-    tags: ["Groove", "Weak hand", "Kick drum foot"],
-  },
-  {
-    name: "Triplet fill around the toms",
-    description:
-      "Play an eighth-note triplet fill from the snare down to the floor tom and land on the crash.",
-    difficulty: "intermediate",
-    tempo: 90,
-    minutes: 4,
-    status: "published",
-    tags: ["Hand speed", "Groove"],
-  },
-  {
-    name: "Five stroke roll endurance",
-    description:
-      "Repeat the five stroke roll for the whole duration without losing evenness between the strokes.",
-    difficulty: "advanced",
-    tempo: 120,
-    minutes: 10,
-    status: "published",
-    tags: ["Rudiments", "Hand speed"],
-  },
-  {
-    name: "Hi-hat foot splashes",
-    description:
-      "Splash the hi-hat with your foot on the offbeats while your hands keep a steady quarter-note pulse.",
-    difficulty: "advanced",
-    tempo: 100,
+      "The money beat with an extra kick on the 'and' of 3. Play the two kicks on 3 and 3& with the same weight. Keep the hi-hat steady through the extra kick.",
+    difficulty: "beginner",
+    tempo: 85,
     minutes: 5,
     status: "published",
-    tags: ["Hi-hat foot"],
+    tags: ["Groove", "Kick drum foot"],
+    signature: "HK H HS H HK HK HS H",
   },
   {
-    name: "Swiss army triplets",
+    name: "Half-time groove",
     description:
-      "Combine flams and a triplet rudiment pattern around the snare. Keep the accents sharp and the rest soft.",
+      "Eighth notes on the hi-hat, kick on 1, snare only on 3, and a pickup kick on the 'and' of 4. The bar feels twice as long as the tempo. Let the snare ring.",
+    difficulty: "intermediate",
+    tempo: 70,
+    minutes: 5,
+    status: "published",
+    tags: ["Groove"],
+    signature: "HK H H H HS H H HK",
+  },
+  {
+    name: "Linear eighths",
+    description:
+      "A linear pattern: no two limbs ever play together. Kick, right hand on the hi-hat and left hand on the snare take turns. Aim for even eighth notes across all three voices.",
     difficulty: "advanced",
-    tempo: 105,
+    tempo: 95,
     minutes: 6,
     status: "published",
-    tags: ["Rudiments", "Weak hand"],
+    tags: ["Groove", "Weak hand", "Kick drum foot"],
+    signature: "K H(R) S(L) H(R) K K S(L) H(R)",
   },
   {
-    name: "Half-time shuffle",
-    description: "A half-time shuffle with ghost notes on the snare, played at a relaxed tempo.",
-    difficulty: "advanced",
+    name: "Offbeat snare reading",
+    description:
+      "Play the snare with the left hand only on the 'and' of each beat and count the downbeats out loud. The rests are as important as the notes. Lock in with the click on every quarter note.",
+    difficulty: "beginner",
     tempo: 70,
-    minutes: 8,
-    status: "draft",
-    tags: ["Groove"],
+    minutes: 3,
+    status: "published",
+    tags: ["Weak hand"],
+    signature: "- S(L) - S(L) - S(L) - S(L)",
   },
   {
-    name: "Left foot clave on hi-hat",
-    description: "Play a 3-2 clave with the hi-hat foot while the hands keep a basic rock beat.",
+    name: "Syncopated kick groove",
+    description:
+      "Eighth notes on the hi-hat, snare on 2 and 4, kicks on 1, the 'and' of 2 and the 'and' of 3. The kicks between the beats push the groove forward. Keep the snare backbeat solid.",
+    difficulty: "advanced",
+    tempo: 90,
+    minutes: 6,
+    status: "published",
+    tags: ["Groove", "Kick drum foot"],
+    signature: "HK H HS HK H HK HS H",
+  },
+  {
+    name: "Hand and foot alternation",
+    description:
+      "Kick on every beat and the snare on every 'and', alternating hands. Hands and foot never play together. Keep the spacing between foot and hand exactly even.",
+    difficulty: "beginner",
+    tempo: 80,
+    minutes: 3,
+    status: "published",
+    tags: ["Kick drum foot", "Hand speed"],
+    signature: "K S(R) K S(L) K S(R) K S(L)",
+  },
+  {
+    name: "Paradiddle groove",
+    description:
+      "A paradiddle split between hands: the right hand plays the hi-hat, the left hand the snare, with kicks on 1 and 3. It sounds like a groove but trains the rudiment. Learn the hands alone before adding the kick.",
     difficulty: "advanced",
     tempo: 80,
-    minutes: 6,
+    minutes: 5,
     status: "draft",
-    tags: ["Hi-hat foot", "Groove"],
+    tags: ["Rudiments", "Groove"],
+    signature: "HK(R) S(L) H(R) H(R) SK(L) H(R) S(L) S(L)",
   },
   {
-    name: "Alternating single strokes warm-up",
+    name: "Kick and snare call",
     description:
-      "A short warm-up of single strokes at three tempos to start every practice session.",
+      "Two short phrases between kick and snare with rests in between. Answer each kick phrase with the snare. Keep the rests exactly in time.",
     difficulty: "beginner",
-    tempo: 60,
-    minutes: 2,
+    tempo: 75,
+    minutes: 3,
     status: "draft",
-    tags: ["Hand speed", "Weak hand"],
+    tags: ["Kick drum foot"],
+    signature: "K - S - K K S -",
+  },
+  {
+    name: "Hi-hat foot chicks on 2&4",
+    description:
+      "Close the hi-hat with your foot on 2 and 4 while counting quarter notes. The hi-hat foot cannot be written in the current notation yet, so this lesson stays a draft without a signature.",
+    difficulty: "beginner",
+    tempo: 65,
+    minutes: 3,
+    status: "draft",
+    tags: ["Hi-hat foot", "Groove"],
+    signature: "- - - - - - - -",
   },
 ];
 
-// Published lessons that get the seed user's practice (and so are locked). Together they cover four
-// tags: Groove, Rudiments, Hand speed and Weak hand.
+const SIGNATURE_CODES = { H: "hihat-closed", S: "snare", K: "kick" } as const;
+
+/**
+ * Parses the spec §5.1 grid notation: 8 tokens, each `-` (rest) or a run of H/S/K, optionally
+ * followed by `(comment)`. Anything else throws, so a typo fails `db:seed` instead of being stored.
+ */
+function signatureFromGrid(grid: string): LessonSignatureJson {
+  const tokens = grid.trim().split(/\s+/);
+  if (tokens.length !== 8) throw new Error(`Signature grid needs 8 slots: "${grid}"`);
+  const slots = tokens.map((token) => {
+    const match = /^(-|[HSK]+)(?:\(([^()]{1,3})\))?$/.exec(token);
+    if (!match) throw new Error(`Invalid signature slot "${token}" in "${grid}"`);
+    const [, notes = "", comment = ""] = match;
+    const codes = notes === "-" ? [] : [...notes];
+    if (new Set(codes).size !== codes.length) throw new Error(`Repeated instrument in "${token}"`);
+    return {
+      instruments: codes.map((code) => SIGNATURE_CODES[code as keyof typeof SIGNATURE_CODES]),
+      comment,
+    };
+  });
+  return { version: "v1", slots };
+}
+
+// Published lessons that get the seed user's practice (and so are locked): Money beat, Single
+// paradiddles and Weak hand eighth notes. Together they cover four tags: Groove, Rudiments, Hand speed
+// and Weak hand.
 const LOGGED_LESSON_INDEXES = [1, 2, 5] as const;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -287,6 +333,7 @@ export async function seedDatabase(db: Database): Promise<void> {
           recommendedTempoBpm: l.tempo,
           recommendedDurationSeconds: l.minutes * 60,
           status: l.status,
+          signature: signatureFromGrid(l.signature),
           createdAt: new Date(
             loggedIndexes.includes(i)
               ? now - 425 * DAY_MS + i * DAY_MS

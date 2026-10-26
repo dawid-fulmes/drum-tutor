@@ -9,7 +9,7 @@ import {
 } from "@drum-tutor/contracts";
 import { type LessonRow, practiceLogs } from "@drum-tutor/db";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { insertLesson, insertTag, loginCookies } from "../../../test/fixtures";
+import { insertLesson, insertTag, loginCookies, TEST_SIGNATURE } from "../../../test/fixtures";
 import { createTestApp, resetDatabase } from "../../../test/helpers";
 
 const UNKNOWN_ID = "00000000-0000-4000-8000-000000000000";
@@ -188,6 +188,7 @@ describe("POST /api/practice-logs", () => {
       tagIds: [(await insertTag(ctx.db, "Other")).id],
       recommendedTempoBpm: 60,
       recommendedDurationSeconds: 180,
+      signature: TEST_SIGNATURE,
     };
     const url = withId(ApiPaths.adminLesson, lesson.id);
     const responses = await Promise.all([

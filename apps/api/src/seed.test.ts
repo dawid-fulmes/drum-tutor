@@ -1,11 +1,15 @@
 import {
+  AdminLessonSchema,
   AdminLessonSummarySchema,
   AdminTagSchema,
   ApiPaths,
   DailyStatsSchema,
   LessonSummarySchema,
   pageSchema,
+  type Signature,
+  signatureHasNotes,
   WeeklyStatsSchema,
+  withId,
 } from "@drum-tutor/contracts";
 import { seedDatabase, users } from "@drum-tutor/db";
 import { eq } from "drizzle-orm";
@@ -72,6 +76,13 @@ describe("seedDatabase", () => {
       expect(item.tags.length).toBeLessThanOrEqual(3);
     }
 
+    expect(locked.map((i) => i.name).sort()).toEqual([
+      "Money beat",
+      "Single paradiddles",
+      "Weak hand eighth notes",
+    ]);
+    await checkSignatures(admin.items.map((i) => i.id));
+
     const tagPage = pageSchema(AdminTagSchema).parse(
       await get(`${ApiPaths.adminTags}?pageSize=100`),
     );
@@ -80,6 +91,59 @@ describe("seedDatabase", () => {
     );
 
     await checkSeedUserStats(locked[0]?.tags[0]?.id as string);
+  };
+
+  const INSTRUMENT_CODES = { "hihat-closed": "H", snare: "S", kick: "K" } as const;
+  /** The spec §5.1 grid notation of a signature's instruments, e.g. "HK H HS H …". */
+  const grid = (signature: Signature) =>
+    signature.slots
+      .map((slot) =>
+        slot.instruments.length === 0
+          ? "-"
+          : slot.instruments
+              .map((i) => INSTRUMENT_CODES[i])
+              .sort()
+              .join(""),
+      )
+      .join(" ");
+
+  // Every stored signature passes the contract, and every published lesson has notes (ADR-0053).
+  const checkSignatures = async (ids: string[]) => {
+    const lessons = await Promise.all(
+      ids.map(async (id) => AdminLessonSchema.parse(await get(withId(ApiPaths.adminLesson, id)))),
+    );
+    const byName = new Map(lessons.map((l) => [l.name, l]));
+    for (const lesson of lessons) {
+      if (lesson.status === "published") expect(signatureHasNotes(lesson.signature)).toBe(true);
+    }
+    const hihatChicks = byName.get("Hi-hat foot chicks on 2&4");
+    expect(hihatChicks?.status).toBe("draft");
+    expect(signatureHasNotes(hihatChicks?.signature as Signature)).toBe(false);
+    const sorted = (cells: string) =>
+      cells
+        .split(" ")
+        .map((cell) => [...cell].sort().join(""))
+        .join(" ");
+    expect(grid(byName.get("Money beat")?.signature as Signature)).toBe(
+      sorted("HK H HS H HK H HS H"),
+    );
+    expect(byName.get("Single strokes on a pad")?.signature.slots.map((s) => s.comment)).toEqual([
+      "R",
+      "L",
+      "R",
+      "L",
+      "R",
+      "L",
+      "R",
+      "L",
+    ]);
+    for (const dropped of [
+      "Sixteenth-note hi-hat groove",
+      "Triplet fill around the toms",
+      "Flam taps",
+    ]) {
+      expect(byName.has(dropped)).toBe(false);
+    }
   };
 
   const isoDate = (ms: number) => new Date(ms).toISOString().slice(0, 10);

@@ -3,8 +3,10 @@ import {
   type AdminLessonSummary,
   ApiErrorCode,
   type LessonInput,
+  type LessonStatus,
   type Page,
   type PaginationQuery,
+  signatureHasNotes,
   type Tag,
 } from "@drum-tutor/contracts";
 import { type Database, type LessonRow, lessons, lessonTags, practiceLogs } from "@drum-tutor/db";
@@ -15,6 +17,7 @@ import { hasPgErrorCode, PgErrorCode } from "../../lib/pg-errors";
 import { AppError } from "../../plugins/error-handler";
 import { findExistingTagIds } from "../tags/tags.repository";
 import { loadTagsForLessons, toLessonSummary } from "./lesson-tags";
+import { signatureEmpty, toSignature } from "./signature";
 
 const notFound = () => new AppError(404, ApiErrorCode.NOT_FOUND, "Lesson not found");
 const lessonLocked = () =>
@@ -45,7 +48,11 @@ function toAdminLessonSummary(row: AdminLessonRow, tags: Tag[]): AdminLessonSumm
 }
 
 function toAdminLesson(row: AdminLessonRow, tags: Tag[]): AdminLesson {
-  return { ...toAdminLessonSummary(row, tags), description: row.description };
+  return {
+    ...toAdminLessonSummary(row, tags),
+    description: row.description,
+    signature: toSignature(row.signature),
+  };
 }
 
 export async function listAdminLessons(
@@ -85,9 +92,9 @@ export async function getAdminLesson(db: Database, id: string): Promise<AdminLes
  * The log check is a separate statement on purpose: after `FOR UPDATE` waited for a concurrent
  * log insert to commit, only a new statement's snapshot sees that log.
  */
-async function lockUnloggedLesson(tx: Transaction, id: string): Promise<void> {
+async function lockUnloggedLesson(tx: Transaction, id: string): Promise<{ status: LessonStatus }> {
   const [row] = await tx
-    .select({ id: lessons.id })
+    .select({ status: lessons.status })
     .from(lessons)
     .where(eq(lessons.id, id))
     .for("update");
@@ -98,6 +105,7 @@ async function lockUnloggedLesson(tx: Transaction, id: string): Promise<void> {
     .where(eq(practiceLogs.lessonId, id))
     .limit(1);
   if (log) throw lessonLocked();
+  return row;
 }
 
 async function unknownTagIds(db: DbExecutor, tagIds: string[]): Promise<string[]> {
@@ -136,6 +144,7 @@ function lessonValues(input: LessonInput) {
     difficulty: input.difficulty,
     recommendedTempoBpm: input.recommendedTempoBpm,
     recommendedDurationSeconds: input.recommendedDurationSeconds,
+    signature: input.signature,
   };
 }
 
@@ -159,7 +168,10 @@ export async function createLesson(db: Database, input: LessonInput): Promise<Ad
   );
 }
 
-/** Replaces all fields and the full tag set; status and createdAt stay as they are. */
+/**
+ * Replaces all fields and the full tag set; status and createdAt stay as they are. A published
+ * lesson keeps at least one note (ADR-0053); the lock is checked first, so LESSON_LOCKED wins.
+ */
 export async function updateLesson(
   db: Database,
   id: string,
@@ -167,7 +179,8 @@ export async function updateLesson(
 ): Promise<AdminLesson> {
   return withTagRaceAsValidation(db, input.tagIds, () =>
     db.transaction(async (tx) => {
-      await lockUnloggedLesson(tx, id);
+      const { status } = await lockUnloggedLesson(tx, id);
+      if (status === "published" && !signatureHasNotes(input.signature)) throw signatureEmpty();
       await assertTagsExist(tx, input.tagIds);
       await tx.update(lessons).set(lessonValues(input)).where(eq(lessons.id, id));
       await tx.delete(lessonTags).where(eq(lessonTags.lessonId, id));
@@ -195,15 +208,20 @@ export async function deleteLesson(db: Database, id: string): Promise<void> {
   }
 }
 
-/** Idempotent, and not blocked by practice logs (spec §5.3). */
+/**
+ * Idempotent and not blocked by practice logs, but refused while the signature has no notes
+ * (ADR-0053). The row lock orders it against a concurrent update that empties the signature.
+ */
 export async function publishLesson(db: Database, id: string): Promise<AdminLesson> {
   return db.transaction(async (tx) => {
-    const updated = await tx
-      .update(lessons)
-      .set({ status: "published" })
+    const [row] = await tx
+      .select({ signature: lessons.signature })
+      .from(lessons)
       .where(eq(lessons.id, id))
-      .returning({ id: lessons.id });
-    if (updated.length === 0) throw notFound();
+      .for("update");
+    if (!row) throw notFound();
+    if (!signatureHasNotes(toSignature(row.signature))) throw signatureEmpty();
+    await tx.update(lessons).set({ status: "published" }).where(eq(lessons.id, id));
     return loadAdminLesson(tx, id);
   });
 }

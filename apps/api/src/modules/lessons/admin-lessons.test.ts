@@ -4,19 +4,40 @@ import {
   AdminLessonSummarySchema,
   ApiErrorSchema,
   ApiPaths,
+  EMPTY_SIGNATURE_V1,
   type LessonInput,
   pageSchema,
+  type Signature,
   withId,
 } from "@drum-tutor/contracts";
 import { lessons, lessonTags, type TagRow } from "@drum-tutor/db";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { insertLesson, insertPracticeLog, insertTag, loginCookies } from "../../../test/fixtures";
+import {
+  insertLesson,
+  insertPracticeLog,
+  insertTag,
+  loginCookies,
+  TEST_SIGNATURE,
+} from "../../../test/fixtures";
 import { createTestApp, resetDatabase } from "../../../test/helpers";
 
 const AdminLessonPageSchema = pageSchema(AdminLessonSummarySchema);
 const UNKNOWN_ID = "00000000-0000-4000-8000-000000000000";
 const LOCKED_MESSAGE = "This lesson has practice logs and can't be changed";
+const SIGNATURE_EMPTY_MESSAGE = "Add at least one note to the signature before publishing";
+const MONEY_BEAT: Signature = {
+  version: "v1",
+  slots: [0, 1, 2, 3, 4, 5, 6, 7].map((i) => ({
+    instruments:
+      i % 4 === 0
+        ? ["hihat-closed", "kick"]
+        : i % 4 === 2
+          ? ["hihat-closed", "snare"]
+          : ["hihat-closed"],
+    comment: "",
+  })),
+};
 
 describe("admin lesson endpoints", () => {
   let ctx: Awaited<ReturnType<typeof createTestApp>>;
@@ -46,6 +67,7 @@ describe("admin lesson endpoints", () => {
     tagIds: [groove.id],
     recommendedTempoBpm: 90,
     recommendedDurationSeconds: 300,
+    signature: TEST_SIGNATURE,
     ...overrides,
   });
   const create = (payload: unknown) =>
@@ -173,6 +195,156 @@ describe("admin lesson endpoints", () => {
     });
   });
 
+  describe("signature", () => {
+    const storedSignatures = async () =>
+      (await ctx.db.select({ signature: lessons.signature }).from(lessons)).map(
+        (row) => row.signature,
+      );
+
+    it("stores and returns the signature", async () => {
+      const res = await create(input({ signature: MONEY_BEAT }));
+      expect(res.statusCode).toBe(201);
+      const body = AdminLessonSchema.parse(res.json());
+      expect(body.signature).toEqual(MONEY_BEAT);
+      expect(AdminLessonSchema.parse((await read(body.id)).json()).signature).toEqual(MONEY_BEAT);
+    });
+
+    it("creates a draft with an empty signature", async () => {
+      const res = await create(input({ signature: EMPTY_SIGNATURE_V1 }));
+      expect(res.statusCode).toBe(201);
+      expect(AdminLessonSchema.parse(res.json()).signature).toEqual(EMPTY_SIGNATURE_V1);
+    });
+
+    it("stores exactly the contract shape, without unknown keys", async () => {
+      const signature = {
+        ...MONEY_BEAT,
+        bpm: 90,
+        slots: MONEY_BEAT.slots.map((slot, i) => (i === 0 ? { ...slot, accent: true } : slot)),
+      };
+      expect((await create({ ...input(), signature })).statusCode).toBe(201);
+      expect(await storedSignatures()).toEqual([MONEY_BEAT]);
+    });
+
+    it("stores comments trimmed", async () => {
+      const slots = TEST_SIGNATURE.slots.map((slot, i) =>
+        i === 0 ? { ...slot, comment: " R " } : slot,
+      );
+      expect((await create(input({ signature: { version: "v1", slots } }))).statusCode).toBe(201);
+      expect((await storedSignatures())[0]?.slots[0]?.comment).toBe("R");
+    });
+
+    it("rejects an invalid signature with the field path", async () => {
+      const longComment = TEST_SIGNATURE.slots.map((slot, i) =>
+        i === 0 ? { ...slot, comment: "RLRL" } : slot,
+      );
+      const res = await create(input({ signature: { version: "v1", slots: longComment } }));
+      expect(res.statusCode).toBe(400);
+      expect(errorOf(res).details).toContainEqual({
+        path: "signature.slots.0.comment",
+        message: "A comment can be at most 3 characters",
+      });
+      const short = await create(
+        input({ signature: { version: "v1", slots: TEST_SIGNATURE.slots.slice(0, 7) } }),
+      );
+      expect(short.statusCode).toBe(400);
+      expect(errorOf(short).details?.map((d) => d.path)).toContain("signature.slots");
+      expect(await lessonCount()).toBe(0);
+    });
+
+    it("replaces the signature of a draft", async () => {
+      const lesson = await insertLesson(ctx.db, { tagIds: [groove.id] });
+      const res = await update(lesson.id, input({ signature: MONEY_BEAT }));
+      expect(res.statusCode).toBe(200);
+      expect(AdminLessonSchema.parse((await read(lesson.id)).json()).signature).toEqual(MONEY_BEAT);
+    });
+  });
+
+  describe("signature rules", () => {
+    const ONE_NOTE: Signature = {
+      version: "v1",
+      slots: EMPTY_SIGNATURE_V1.slots.map((slot, i) =>
+        i === 3 ? { ...slot, instruments: ["kick"] } : slot,
+      ),
+    };
+    const expectSignatureEmpty = (res: { statusCode: number; json(): unknown }) => {
+      expect(res.statusCode).toBe(409);
+      expect(errorOf(res)).toMatchObject({
+        code: "SIGNATURE_EMPTY",
+        message: SIGNATURE_EMPTY_MESSAGE,
+      });
+    };
+    const readLesson = async (id: string) => AdminLessonSchema.parse((await read(id)).json());
+
+    it("refuses to publish a draft with an empty signature", async () => {
+      const lesson = await insertLesson(ctx.db, {
+        tagIds: [groove.id],
+        signature: EMPTY_SIGNATURE_V1,
+      });
+      expectSignatureEmpty(await publish(lesson.id));
+      expect((await readLesson(lesson.id)).status).toBe("draft");
+    });
+
+    it("publishes a draft with a single note", async () => {
+      const lesson = await insertLesson(ctx.db, { tagIds: [groove.id], signature: ONE_NOTE });
+      const res = await publish(lesson.id);
+      expect(res.statusCode).toBe(200);
+      expect(AdminLessonSchema.parse(res.json()).status).toBe("published");
+    });
+
+    it("refuses to republish a published lesson with an empty signature, but unpublishes it", async () => {
+      // A lesson published before the signature migration carries the empty backfilled value.
+      const lesson = await insertLesson(ctx.db, {
+        tagIds: [groove.id],
+        status: "published",
+        signature: EMPTY_SIGNATURE_V1,
+      });
+      expectSignatureEmpty(await publish(lesson.id));
+      const res = await unpublish(lesson.id);
+      expect(res.statusCode).toBe(200);
+      expect(AdminLessonSchema.parse(res.json()).status).toBe("draft");
+    });
+
+    it("refuses to save a published lesson with an empty signature, changing nothing", async () => {
+      const lesson = await insertLesson(ctx.db, { tagIds: [groove.id], status: "published" });
+      const before = await readLesson(lesson.id);
+      expectSignatureEmpty(
+        await update(lesson.id, input({ name: "Renamed", signature: EMPTY_SIGNATURE_V1 })),
+      );
+      expect(await readLesson(lesson.id)).toEqual(before);
+    });
+
+    it("saves a draft with an empty signature", async () => {
+      const lesson = await insertLesson(ctx.db, { tagIds: [groove.id] });
+      const res = await update(lesson.id, input({ signature: EMPTY_SIGNATURE_V1 }));
+      expect(res.statusCode).toBe(200);
+      expect(AdminLessonSchema.parse(res.json()).signature).toEqual(EMPTY_SIGNATURE_V1);
+    });
+
+    it("reports a locked lesson before an empty signature", async () => {
+      const lesson = await insertLesson(ctx.db, { tagIds: [groove.id], status: "published" });
+      await insertPracticeLog(ctx.db, lesson.id);
+      const before = await readLesson(lesson.id);
+      const res = await update(lesson.id, input({ signature: EMPTY_SIGNATURE_V1 }));
+      expect(res.statusCode).toBe(409);
+      expect(errorOf(res).code).toBe("LESSON_LOCKED");
+      expect(await readLesson(lesson.id)).toEqual(before);
+    });
+
+    it("never ends published with an empty signature when publish races an emptying save", async () => {
+      for (let round = 0; round < 10; round++) {
+        const lesson = await insertLesson(ctx.db, { tagIds: [groove.id] });
+        const responses = await Promise.all([
+          update(lesson.id, input({ signature: EMPTY_SIGNATURE_V1 })),
+          publish(lesson.id),
+        ]);
+        for (const res of responses) expect([200, 409]).toContain(res.statusCode);
+        const after = await readLesson(lesson.id);
+        if (after.status === "published") expect(after.signature).toEqual(TEST_SIGNATURE);
+        else expect(after.signature).toEqual(EMPTY_SIGNATURE_V1);
+      }
+    });
+  });
+
   describe("update", () => {
     it("replaces all fields and the tag set of a published lesson, keeping status and createdAt", async () => {
       const lesson = await insertLesson(ctx.db, {
@@ -186,6 +358,7 @@ describe("admin lesson endpoints", () => {
         tagIds: [snare.id],
         recommendedTempoBpm: 120,
         recommendedDurationSeconds: 600,
+        signature: MONEY_BEAT,
       });
       const res = await update(lesson.id, { ...next, status: "draft" });
       expect(res.statusCode).toBe(200);
@@ -198,6 +371,7 @@ describe("admin lesson endpoints", () => {
         tags: [{ id: snare.id, name: "Snare" }],
         recommendedTempoBpm: 120,
         recommendedDurationSeconds: 600,
+        signature: MONEY_BEAT,
         createdAt: lesson.createdAt.toISOString(),
         status: "published",
         locked: false,
@@ -512,5 +686,8 @@ describe("admin lesson endpoints", () => {
         "/api/admin/lessons/{id}/unpublish",
       ]),
     );
+    const publishPath = (res.json() as { paths: Record<string, { post: { responses: object } }> })
+      .paths["/api/admin/lessons/{id}/publish"];
+    expect(Object.keys(publishPath?.post.responses ?? {})).toContain("409");
   });
 });

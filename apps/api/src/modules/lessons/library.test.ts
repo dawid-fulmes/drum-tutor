@@ -8,7 +8,7 @@ import {
 } from "@drum-tutor/contracts";
 import type { TagRow } from "@drum-tutor/db";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { insertLesson, insertTag, loginCookies } from "../../../test/fixtures";
+import { insertLesson, insertTag, loginCookies, TEST_SIGNATURE } from "../../../test/fixtures";
 import { createTestApp, resetDatabase } from "../../../test/helpers";
 
 const LibraryPageSchema = pageSchema(LessonSummarySchema);
@@ -177,6 +177,14 @@ describe("drummer library endpoints", () => {
       const body = LessonDetailSchema.parse(res.json());
       expect(body.description).toBe("Full text");
       expect(body.tags.map((t) => t.name)).toEqual(["Alpha", "Bravo"]);
+      expect(body.signature).toEqual(TEST_SIGNATURE);
+    });
+
+    it("leaves the signature out of the library list", async () => {
+      await published({ name: "Listed", tagIds: [a.id] });
+      const res = await list();
+      expect(res.statusCode).toBe(200);
+      expect(res.json().items[0]).not.toHaveProperty("signature");
     });
     it("404s an unknown id and 400s a malformed one", async () => {
       const unknown = await ctx.app.inject({

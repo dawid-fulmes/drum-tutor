@@ -77,6 +77,7 @@ function EditLesson({ id }: { id: string }) {
           tagIds: data.tags.map((tag) => tag.id),
           recommendedTempoBpm: data.recommendedTempoBpm,
           recommendedDurationSeconds: data.recommendedDurationSeconds,
+          signature: data.signature,
         }}
         disabled={data.locked}
         pending={update.isPending}
