@@ -1,3 +1,6 @@
+import type { NotationVisual } from "@/features/signature/signature-notation";
+import type { PracticeState } from "./practice-machine";
+
 /** Clicks before the exercise starts; they are not part of the duration (R2). */
 export const COUNT_IN_BEATS = 4;
 
@@ -58,4 +61,30 @@ export function clicksInWindow(plan: ClickPlan, from: number, to: number): Click
 export function remainingSeconds(plan: ClickPlan, now: number): number {
   if (now < plan.exerciseStart) return plan.durationSeconds;
   return Math.min(plan.durationSeconds, Math.max(0, Math.ceil(plan.end - now)));
+}
+
+/** The count-in overlay's number: 4 until the second count-in click, then 3, 2, 1 (ADR-0054). */
+export function countInNumber(plan: ClickPlan, now: number): number {
+  const due = Math.floor((now - plan.startTime) / plan.beatSeconds + 1e-9);
+  return COUNT_IN_BEATS - Math.min(COUNT_IN_BEATS - 1, Math.max(0, due));
+}
+
+/** The quarter note to highlight (0 = beat 1), or null outside the exercise (ADR-0054). */
+export function currentBeat(plan: ClickPlan, now: number): number | null {
+  if (now < plan.exerciseStart || now >= plan.end) return null;
+  return Math.floor((now - plan.exerciseStart) / plan.beatSeconds + 1e-9) % 4;
+}
+
+/**
+ * The notation's look for a panel status. Once the clock has reached the exercise, the beat wins
+ * over a "count-in" status the metronome loop has not updated yet (ADR-0054).
+ */
+export function notationVisual(
+  status: PracticeState["status"],
+  countIn: number,
+  beat: number | null,
+): NotationVisual {
+  if (status !== "count-in" && status !== "playing") return { kind: "static" };
+  if (status === "count-in" && beat === null) return { kind: "count-in", number: countIn };
+  return { kind: "playing", beat };
 }

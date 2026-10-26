@@ -6,8 +6,15 @@ import { Button } from "@/components/ui/button";
 import { DurationField } from "@/features/admin-lessons/duration-field";
 import { TempoField } from "@/features/admin-lessons/tempo-field";
 import { formatDuration } from "@/features/lessons/duration";
+import { SignatureNotation } from "@/features/signature/signature-notation";
 import { todayLocal } from "@/lib/local-date";
-import { remainingSeconds } from "./click-schedule";
+import {
+  COUNT_IN_BEATS,
+  countInNumber,
+  currentBeat,
+  notationVisual,
+  remainingSeconds,
+} from "./click-schedule";
 import { LeaveGuard } from "./leave-guard";
 import { Metronome } from "./metronome";
 import { useSavePracticeLog } from "./practice-logs.api";
@@ -28,7 +35,10 @@ const clearTempoErrorWhenValid = {
   },
 };
 
-/** Setup, count-in, play and saving of one practice session on the lesson page (spec §6.2). */
+/**
+ * The lesson's notation above setup, count-in, play and saving of one practice session (spec §6.2;
+ * signature spec §7.2). The notation shows the count-in and the current beat from the audio clock.
+ */
 export function PracticePanel({ lesson }: { lesson: LessonDetail }) {
   const recommended: PracticeSettings = {
     tempoBpm: lesson.recommendedTempoBpm,
@@ -38,6 +48,9 @@ export function PracticePanel({ lesson }: { lesson: LessonDetail }) {
   const form = useForm({ defaultValues: recommended });
   const save = useSavePracticeLog();
   const [remaining, setRemaining] = useState(recommended.durationSeconds);
+  // Primitives, so the 60 fps frame loop only re-renders when the number or the beat changes.
+  const [countIn, setCountIn] = useState(COUNT_IN_BEATS);
+  const [beat, setBeat] = useState<number | null>(null);
 
   // The settings of the running session, for the log built when the metronome completes.
   const session = useRef<PracticeSettings>(recommended);
@@ -89,11 +102,20 @@ export function PracticePanel({ lesson }: { lesson: LessonDetail }) {
     let frame = 0;
     const refresh = () => {
       const plan = metronome.plan;
-      if (plan) setRemaining(remainingSeconds(plan, metronome.now()));
+      if (plan) {
+        const now = metronome.now();
+        setRemaining(remainingSeconds(plan, now));
+        setCountIn(countInNumber(plan, now));
+        setBeat(currentBeat(plan, now));
+      }
       frame = requestAnimationFrame(refresh);
     };
     frame = requestAnimationFrame(refresh);
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(frame);
+      setCountIn(COUNT_IN_BEATS);
+      setBeat(null);
+    };
   }, [running, metronome]);
 
   // One request per attempt; StrictMode runs effects twice in development.
@@ -138,6 +160,8 @@ export function PracticePanel({ lesson }: { lesson: LessonDetail }) {
     });
   };
 
+  const visual = notationVisual(state.status, countIn, beat);
+
   const stop = () => {
     metronome.stop();
     dispatch({ type: "stop", cause: "user" });
@@ -146,6 +170,9 @@ export function PracticePanel({ lesson }: { lesson: LessonDetail }) {
   return (
     <section aria-label="Practice" className="grid gap-4">
       <LeaveGuard when={isUnsaved(state)} />
+      <div className="rounded-xl border p-4">
+        <SignatureNotation signature={lesson.signature} visual={visual} />
+      </div>
       {state.status === "setup" && (
         <>
           {state.stoppedInBackground && (

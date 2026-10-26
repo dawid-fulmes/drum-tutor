@@ -84,9 +84,6 @@ export function LessonDetails({ id }: { id: string }) {
         {formatDuration(data.recommendedDurationSeconds)}
       </p>
       <p className="whitespace-pre-line">{data.description}</p>
-      <div className="flex h-40 items-center justify-center rounded-xl border border-dashed text-muted-foreground">
-        Sheet coming soon
-      </div>
       <PracticePanel lesson={data} />
     </div>
   );

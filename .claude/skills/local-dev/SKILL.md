@@ -93,6 +93,16 @@ Lessons list and form:
 10. A malformed or unknown id (`/admin/lessons/not-a-uuid/edit`) shows "Lesson not found" with "Back to lessons".
 11. Locked in another tab: open an edit page, insert a practice log for that lesson with psql, change a field and "Save". Expect a toast with the API message, then the locked Alert. Deleting the lesson with psql instead gives the toast "Lesson not found" and the "Lesson not found" page.
 
+Signature editor (spec `signature` §7.3; cells are buttons named e.g. "Snare on 2&", comments are textboxes "Comment on 1"):
+
+S1. `/admin/lessons/new` shows an empty grid, a preview with four quarter rests and "Add at least one note before publishing.". Toggling the money-beat cells turns the preview into the money beat and removes the note; a comment "R" on slot 1 shows above the first note.
+S2. Toggle "Kick on 1", then "Hi-hat (closed) on 1", and create the lesson: the `POST` body has `["hihat-closed","kick"]` in slot 0; reopening the edit page shows the same cells and comment.
+S3. Toggle cells, Cancel, then "New lesson" again: the grid is empty.
+S4. Pasting `RLRL` into a comment leaves `RLR`. A comment `🥁` saves (201). A 4-character comment set past `maxLength` from script shows "A comment can be at most 3 characters" and sends no request.
+S5. Publish the draft "Hi-hat foot chicks on 2&4" from its row menu: toast "Add at least one note to the signature before publishing", status stays Draft.
+S6. Edit "Four on the floor", clear every cell and Save: 409 with the same toast, and the grid stays cleared after the refetch. Toggle "Kick on 1" and Save: 200. Re-seed afterwards.
+S7. The edit page of the locked "Money beat" shows all 24 cells and 8 comments disabled, with its notation in the preview.
+
 Tags:
 
 12. Open `/admin/tags`. Expect the 6 seeded tags with "Used by" counts. Add "Odd meters" (toast "Tag added"), then "odd METERS". Expect the inline error `A tag named "odd METERS" already exists` and no toast.
@@ -118,9 +128,9 @@ Seed first (`scripts/with-node.sh pnpm db:seed`: 6 tags, 15 published and 3 draf
 8. Empty states: open `/lessons?page=3&tagIds=["<Rudiments id>","<Kick drum foot id>"]&difficulties=["beginner"]` (ids from `/api/tags` or psql). Expect "No lessons match these filters", "Try removing a tag or selecting more levels.", a "Clear filters" button, no redirect and no request loop; the button restores the full library. "No lessons yet" with "New lessons will show up here once they are published." shows on an empty database (see step 14).
 9. Skeletons: in `browser_run_code_unsafe` register `page.route('**/api/lessons**', async r => { await new Promise(res => setTimeout(res, 2000)); await r.continue(); })`, then toggle a level and snapshot during the delay. Expect skeleton cards (as many as the page size) and no count text. Remove the route with `page.unroute`.
 10. Deleted tag in the URL: pick a tag assigned to lessons, then with `docker compose exec postgres psql -U drum -d drum_tutor` run `delete from lesson_tags where tag_id = '<id>'` and `delete from tags where id = '<id>'`. Reload a URL that has this id plus another filter. Expect the dead id gone from the URL, results for the remaining filters, and one Back going to the previous page rather than to the dead-id URL. Re-seed afterwards.
-11. Details: click a card. Expect `/lessons/<uuid>` with "‹ Back to library", name, badges, "Recommended: <bpm> BPM · m:ss", description, "Sheet coming soon" and a disabled "Start" button. "Back to library" returns to the library with the filters, sort and page you came from, also after a reload of the details page.
+11. Details: click a card. Expect `/lessons/<uuid>` with "‹ Back to library", name, badges, "Recommended: <bpm> BPM · m:ss", description, the drum notation (`img` "Drum notation: one bar of 4/4") and the practice panel with "Start". "Back to library" returns to the library with the filters, sort and page you came from, also after a reload of the details page.
 12. Not found: open `/lessons/abc`, a random uuid, and the id of a draft lesson (`select id from lessons where status = 'draft'`). Expect "Lesson not found" with "Back to library" each time, never the generic route error. The console shows the 400/404 resource errors.
-13. Search the library and a details page for "rating", "No ratings", "0.0" and any notation: expect no match; the details page shows only the "Sheet coming soon" box (ADR-0030, ADR-0031).
+13. Search the library and a details page for "rating", "No ratings" and "0.0": expect no match (ADR-0031). Library cards show no notation.
 
 Empty database (run this last, it wipes data):
 
@@ -152,7 +162,7 @@ await page.addInitScript(() => {
 Accented clicks are 1500 Hz, the others 1000 Hz. To fake a hidden page, run `Object.defineProperty(document, "visibilityState", { value: "hidden", configurable: true }); document.dispatchEvent(new Event("visibilitychange"))`, and set it back to `"visible"` afterwards. `scripts/with-node.sh pnpm db:seed` restores the seed afterwards.
 
 1. Defaults: tempo and duration equal the lesson's recommendation. "Decrease duration by 30 seconds" stops at 00:30. Tempo `320` shows "Tempo must be between 30 and 300 BPM" and disables Start.
-2. Count-in: at 120 BPM, Start gives 4 count-in clicks 0.5 s apart (the first at 1500 Hz), then exercise clicks 0.5 s apart with 1500 Hz on every 4th. While counting in, "Count-in" shows with the full duration. There is no beat indicator anywhere.
+2. Count-in: at 120 BPM, Start gives 4 count-in clicks 0.5 s apart (the first at 1500 Hz), then exercise clicks 0.5 s apart with 1500 Hz on every 4th. While counting in, "Count-in" shows with the full duration, the notation is greyed out (`grayscale` on the SVG) and `[data-testid="count-in-number"]` reads 4, 3, 2, 1, changing on each count-in click. During play the SVG's `data-beat` goes 1, 2, 3, 4, 1, … on each exercise click; after Stop or completion it is gone.
 3. Stop during play: setup is back, `__clicks` stops growing and there is no `POST /api/practice-logs`.
 4. Double-click Start: `__contexts` grows by exactly 1.
 5. Completion: a 0:30 session ends with "Completed — 0:30 at <bpm> BPM logged.", one `POST` with 201, and 4 + 60 clicks at 120 BPM. `GET /api/stats/daily` for one of the lesson's tags shows the 30 s today. "Practice again" keeps tempo and duration.
@@ -164,6 +174,15 @@ Accented clicks are 1500 Hz, the others 1000 Hz. To fake a hidden page, run `Obj
 10. Leave while unsaved: in the retry state, "Leave" navigates away and no `POST` follows in the next 10 s.
 11. Rejected save: in the retry state, set the lesson to draft with `docker compose exec -T postgres psql -U drum -d drum_tutor -c "update lessons set status = 'draft' where id = '<id>'"`, unroute and click "Retry now". Expect 404 and "Your session couldn't be saved: This lesson is no longer available.". Set it back to `published`.
 12. Lost session while saving: in the retry state, `page.context().clearCookies()`, unroute and click "Retry now". Expect a 401 and a redirect to `/login` without the leave dialog.
+
+## Notation (e2e)
+
+The lesson page draws the signature as a drum staff (spec `signature` §7.1). Seed first. Patch `OscillatorNode.prototype.start` only once per page (a second `addInitScript` records every click twice).
+
+1. "Money beat": 8 x noteheads above the staff, kicks on 1 and 3, snares on 2 and 4, four beams, `1 & 2 & 3 & 4 &` below. "Single strokes on a pad": `R L R L R L R L` above the notes. "Quarter-note kick control": kicks with flags and eighth rests. "Offbeat snare reading": rests on the beats, snares on the "and"s. Screenshot the `img` element as evidence.
+2. Visual beat timing: at 60 BPM sample `count-in-number`, `data-beat` and `__ctx.currentTime` every 50 ms. Each change lands within one sample of the matching recorded click.
+3. End between beats: a 0:30 session at 70 BPM loses `data-beat` exactly at the end; nothing is highlighted after "Completed".
+4. At a 375 px viewport the notation fits its card (the header's "Log out" overflows on its own, ADR-0047).
 
 ## Stats flows (e2e)
 

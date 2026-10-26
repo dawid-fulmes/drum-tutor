@@ -16,6 +16,7 @@ import { formatDifficulty } from "@/features/lessons/format";
 import { SelectedTags } from "@/features/tags/selected-tags";
 import { TagPicker } from "@/features/tags/tag-picker";
 import { DurationField } from "./duration-field";
+import { SignatureField } from "./signature-field";
 import { TempoField } from "./tempo-field";
 
 export type LessonFormValues = Omit<LessonInput, "difficulty"> & { difficulty: Difficulty | "" };
@@ -210,6 +211,14 @@ export function LessonForm({
 
       <form.Field name="recommendedDurationSeconds">
         {(field) => <DurationField field={field} disabled={locked} />}
+      </form.Field>
+
+      <form.Field
+        name="signature"
+        validators={{ onChange: shape.signature, onBlur: shape.signature }}
+        listeners={clearStaleErrors}
+      >
+        {(field) => <SignatureField field={field} disabled={locked} />}
       </form.Field>
 
       <div className="flex gap-2">
