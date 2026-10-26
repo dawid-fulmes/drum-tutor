@@ -1,7 +1,6 @@
 # Signature — Plan 01: Backend
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
 - **Status:** done
 
 **Goal:** Everything server-side for spec §4, §5, §6 and the API part of §8: the signature contract (v1 schema and helpers), the `lessons.signature` migration, signature read/write in the lesson endpoints, the `SIGNATURE_EMPTY` publish rule, the rebuilt seed, and the tests that prove each rule.
@@ -85,48 +84,41 @@ const money = sig([
   slot(["hihat-closed", "snare"]),
   slot(["hihat-closed"]),
 ]);
-const firstIssue = (v: unknown) =>
-  SignatureSchema.safeParse(v).error?.issues[0];
+const firstIssue = (v: unknown) => SignatureSchema.safeParse(v).error?.issues[0];
 
 it("accepts a money beat and the empty signature", () => {
   expect(SignatureSchema.safeParse(money).success).toBe(true);
   expect(SignatureSchema.safeParse(EMPTY_SIGNATURE_V1).success).toBe(true);
 });
 it.each([7, 9])("rejects %i slots", (n) =>
-  expect(
-    firstIssue(sig(Array.from({ length: n }, () => slot())))?.message,
-  ).toBe("A signature has exactly 8 slots"),
+  expect(firstIssue(sig(Array.from({ length: n }, () => slot())))?.message).toBe(
+    "A signature has exactly 8 slots",
+  ),
 );
 it("rejects an unknown instrument with only that message", () => {
-  const issues = SignatureSchema.safeParse(
-    sig([slot(["snare", "tom"]), ...Array(7).fill(slot())]),
-  ).error?.issues;
+  const issues = SignatureSchema.safeParse(sig([slot(["snare", "tom"]), ...Array(7).fill(slot())]))
+    .error?.issues;
   expect(issues?.map((i) => i.message)).toEqual(["Unknown instrument"]);
   expect(issues?.[0]?.path).toEqual(["slots", 0, "instruments", 1]);
 });
 it("rejects a duplicate instrument", () =>
-  expect(
-    firstIssue(sig([slot(["snare", "snare"]), ...Array(7).fill(slot())]))
-      ?.message,
-  ).toBe("An instrument can only appear once in a slot"));
+  expect(firstIssue(sig([slot(["snare", "snare"]), ...Array(7).fill(slot())]))?.message).toBe(
+    "An instrument can only appear once in a slot",
+  ));
 it("trims comments and limits them to 3 characters", () => {
   const parsed = SignatureSchema.parse(
     sig([slot(["snare"], " R "), slot([], "   "), ...Array(6).fill(slot())]),
   );
   expect(parsed.slots[0]?.comment).toBe("R");
   expect(parsed.slots[1]?.comment).toBe("");
-  expect(
-    firstIssue(sig([slot([], "RLRL"), ...Array(7).fill(slot())])),
-  ).toMatchObject({
+  expect(firstIssue(sig([slot([], "RLRL"), ...Array(7).fill(slot())]))).toMatchObject({
     path: ["slots", 0, "comment"],
     message: "A comment can be at most 3 characters",
   });
 });
 it("rejects a missing or unknown version", () => {
   expect(SignatureSchema.safeParse({ slots: money.slots }).success).toBe(false);
-  expect(SignatureSchema.safeParse({ ...money, version: "v2" }).success).toBe(
-    false,
-  );
+  expect(SignatureSchema.safeParse({ ...money, version: "v2" }).success).toBe(false);
 });
 it("drops unknown keys", () => {
   const parsed = SignatureSchema.parse({
@@ -140,9 +132,7 @@ it("tells whether a signature has notes", () => {
   expect(signatureHasNotes(EMPTY_SIGNATURE_V1)).toBe(false);
   expect(
     signatureHasNotes(
-      SignatureSchema.parse(
-        sig([slot(), slot(["kick"]), ...Array(6).fill(slot())]),
-      ),
+      SignatureSchema.parse(sig([slot(), slot(["kick"]), ...Array(6).fill(slot())])),
     ),
   ).toBe(true);
 });

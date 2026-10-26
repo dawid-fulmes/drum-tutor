@@ -1,8 +1,7 @@
 # Signature — Plan 03: Admin editor
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
-- **Status:** approved
+- **Status:** done
 
 **Goal:** Spec §7.3: a **Signature** section in the admin lesson form. It has a 3 × 8 grid of toggle buttons (rows Hi-hat (closed), Snare, Kick; columns `1 & 2 & 3 & 4 &`), a comment input per slot, and a live notation preview. It also gets validation, the locked state and the empty-signature note. The plan closes the `signature` scope (PRD tracking, spec status).
 
@@ -63,17 +62,17 @@
   - `SLOT_LABELS = ["1", "1&", "2", "2&", "3", "3&", "4", "4&"] as const` and `COLUMN_HEADERS = ["1", "&", "2", "&", "3", "&", "4", "&"] as const`.
   - `INSTRUMENT_LABELS: Record<Instrument, string>` = `{ "hihat-closed": "Hi-hat (closed)", snare: "Snare", kick: "Kick" }`.
 
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:**
   - toggling `snare` on slot 3 of `EMPTY_SIGNATURE_V1` gives `instruments: ["snare"]` at slot 3 and `[]` elsewhere; toggling again gives `[]`;
   - `EMPTY_SIGNATURE_V1` deep-equals a fresh `{ version: "v1", slots: 8 × { instruments: [], comment: "" } }` after both calls (structuredClone it before, compare after);
   - the result's `slots` array and the changed slot are new references, and unchanged slots are the same references;
   - toggling `kick` then `hihat-closed` on one slot gives `["hihat-closed", "kick"]`; adding `snare` gives `["hihat-closed", "snare", "kick"]`;
   - `setComment(sig, 0, "R")` sets slot 0's comment and leaves the input unchanged;
   - `SLOT_LABELS` and `INSTRUMENT_LABELS` match the copy table.
-- [ ] **Step 2: Run** `scripts/with-node.sh pnpm --filter @drum-tutor/web test -- signature-edit`. Expected: FAIL, module missing.
-- [ ] **Step 3: Implement** the Interfaces in `signature-edit.ts`.
-- [ ] **Step 4: Run** the test. Expected: PASS.
-- [ ] **Step 5: Checkpoint.** `pnpm format`. Files: the two above.
+- [x] **Step 2: Run** `scripts/with-node.sh pnpm --filter @drum-tutor/web test -- signature-edit`. Expected: FAIL, module missing.
+- [x] **Step 3: Implement** the Interfaces in `signature-edit.ts`.
+- [x] **Step 4: Run** the test. Expected: PASS.
+- [x] **Step 5: Checkpoint.** `pnpm format`. Files: the two above.
 
 ### Task 2: Signature field in the lesson form
 
@@ -88,16 +87,16 @@
 - Consumes: Task 1 functions and labels; plan-02 `SignatureNotation`; `signatureHasNotes`, `LessonInputSchema.shape.signature` from contracts.
 - Produces: `SignatureField({ field, disabled }: { field: AnyFieldApi; disabled?: boolean })`.
 
-- [ ] **Step 1: Build `SignatureField`.**
+- [x] **Step 1: Build `SignatureField`.**
   - A `fieldset` with legend `Signature`, then a CSS grid of 9 columns (a row-label column plus 8 slot columns).
   - Header row: `COLUMN_HEADERS`, with beat columns (`1 2 3 4`) in normal weight and the `&` columns muted.
   - One row per instrument in `INSTRUMENTS` order: the label, then 8 shadcn `Toggle`s (`variant="outline"`). Each has `pressed` = the slot contains the instrument, `onPressedChange` → `field.handleChange(toggleInstrument(value, slot, instrument))`, `aria-label` from the copy table and `disabled`. Pressed cells use a strong filled style (e.g. `data-[state=on]:bg-foreground data-[state=on]:text-background`). Beat columns get a stronger border than `&` columns.
   - Comment row: label `Comment`, then 8 `Input`s with `maxLength={3}`, the copy-table `aria-label`, `value` = the slot's comment, and `onChange` → `field.handleChange(setComment(value, slot, event.target.value))`. They are disabled with the field. Each input is centred and narrow.
   - The hint text (muted) under the grid, then the field error (if touched: the first error message, `text-destructive`, as in `TempoField`). While `!signatureHasNotes(value)`, the muted empty-signature note.
   - Under it: label `Preview` and `<SignatureNotation signature={value} />` in a bordered box.
-- [ ] **Step 2: Add it to `LessonForm`** after the duration field: `<form.Field name="signature" validators={{ onChange: shape.signature, onBlur: shape.signature }} listeners={clearStaleErrors}>` rendering `<SignatureField field={field} disabled={locked} />`.
-- [ ] **Step 3: Run** `scripts/with-node.sh pnpm lint && scripts/with-node.sh pnpm typecheck --force && scripts/with-node.sh pnpm test`. Expected: all PASS.
-- [ ] **Step 4: Verify in the browser** (`local-dev` skill, Playwright plugin, after `db:seed`, fresh email):
+- [x] **Step 2: Add it to `LessonForm`** after the duration field: `<form.Field name="signature" validators={{ onChange: shape.signature, onBlur: shape.signature }} listeners={clearStaleErrors}>` rendering `<SignatureField field={field} disabled={locked} />`.
+- [x] **Step 3: Run** `scripts/with-node.sh pnpm lint && scripts/with-node.sh pnpm typecheck --force && scripts/with-node.sh pnpm test`. Expected: all PASS.
+- [x] **Step 4: Verify in the browser** (`local-dev` skill, Playwright plugin, after `db:seed`, fresh email):
   - **New lesson:** `/admin/lessons/new` shows the Signature section with an empty grid, an empty preview (4 quarter rests) and the empty-signature note.
     - Click `Hi-hat (closed) on 1` … `on 4&`, `Kick on 1`, `Kick on 3`, `Snare on 2`, `Snare on 4`. The preview turns into the money beat and the note disappears.
     - Type `R` into `Comment on 1`; it appears above the first note in the preview.
@@ -114,8 +113,8 @@
     - Re-seed afterwards.
   - **Review Focus 3:** the edit page of a locked lesson ("Money beat") shows the grid toggles and comment inputs disabled, with the notation preview of its signature.
   - **Review Focus 5:** in a new lesson, toggle `Kick on 1` then `Hi-hat (closed) on 1`, Create, and check the `POST` body has `["hihat-closed","kick"]` in slot 0.
-- [ ] **Step 5: Update the `local-dev` skill's Admin flows** with the checks above, as steps after the current form steps.
-- [ ] **Step 6: Checkpoint.** `pnpm format`. Files: the files of this task.
+- [x] **Step 5: Update the `local-dev` skill's Admin flows** with the checks above, as steps after the current form steps.
+- [x] **Step 6: Checkpoint.** `pnpm format`. Files: the files of this task.
 
 ### Task 3: Close the scope
 
@@ -123,15 +122,27 @@
 
 - Modify: `docs/PRD.md`, `docs/specs/signature/spec.md` (status, Plans links), `docs/specs/README.md`, this plan
 
-- [ ] **Step 1: PRD tracking** (spec §11):
+- [x] **Step 1: PRD tracking** (spec §11):
   - Tick **US-17** and add `US-17: signature` to the delivering-scope sentence above the story list.
   - Leave US-6 unticked, and add after it: "_(signature part delivered by `signature`; rating still missing.)_".
   - In §4.2 add: "The signature is stored with a format version (`v1` today) and drawn as drum notation. A lesson can be published only when its signature has at least one note (ADR-0050, ADR-0051, ADR-0053)."
   - In §8, point "richer notation" to ADR-0051.
-- [ ] **Step 2: Spec and index.** Set the spec's status to `implemented`. Check that its **Plans** links resolve. In `docs/specs/README.md`, set the signature row to `implemented` with all three plans `(done)`.
-- [ ] **Step 3: Run** `scripts/with-node.sh pnpm lint && scripts/with-node.sh pnpm typecheck --force && scripts/with-node.sh pnpm test`. Expected: all PASS.
-- [ ] **Step 4: Checkpoint.** `pnpm format` (and `npx prettier --write` on the touched Markdown, as before). Tick this plan's checkboxes and set its status to `done`. Files: the docs above.
+- [x] **Step 2: Spec and index.** Set the spec's status to `implemented`. Check that its **Plans** links resolve. In `docs/specs/README.md`, set the signature row to `implemented` with all three plans `(done)`.
+- [x] **Step 3: Run** `scripts/with-node.sh pnpm lint && scripts/with-node.sh pnpm typecheck --force && scripts/with-node.sh pnpm test`. Expected: all PASS.
+- [x] **Step 4: Checkpoint.** `pnpm format` (and `npx prettier --write` on the touched Markdown, as before). Tick this plan's checkboxes and set its status to `done`. Files: the docs above.
 
 ## Execution notes
 
 <!-- Filled in during execution: any decision taken while building. -->
+
+- **Commits.** None during execution; the user commits when they ask.
+- **Task 2.** Pressed cells keep their dark fill on hover (`data-[state=on]:hover:bg-foreground/85`). The stock `Toggle` hover style otherwise turned a pressed cell grey under the pointer.
+- **Task 2, browser check (2026-10-26).** Every Review Focus item passed:
+  - cancel → new lesson gives an empty grid;
+  - `RLRL` is cut to `RLR`; `🥁` saves with 201; a 4-character comment set from script shows the schema message and sends no request;
+  - publishing the empty draft gives the 409 toast and the lesson stays a draft;
+  - emptying "Four on the floor" gives 409 and the grid stays cleared after the refetch; adding a kick then saves with 200;
+  - the locked "Money beat" has all 24 cells and 8 comments disabled, with its preview drawn;
+  - slot 0 is posted as `["hihat-closed","kick"]`.
+- **Task 3.** Markdown is formatted with `pnpm format` (Biome), not `npx prettier` (plan-02 Execution notes).
+- **Final review fix.** `SignatureField` switches on `signature.version` and returns `ReactElement`, like the renderer, so a future version needs its own editor before it typechecks (probed with a temporary `v2`). Comment inputs still have no `aria-invalid` / `aria-describedby`, deferred as minor: `maxLength` already blocks the only invalid case.

@@ -1,8 +1,7 @@
 # Signature — Plan 02: Notation and player
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
-- **Status:** approved
+- **Status:** done
 
 **Goal:** Spec §7.1 and §7.2: the lesson page draws the signature as a drum staff in place of "Sheet coming soon". During the count-in the notation is greyed out under a big `4 → 3 → 2 → 1`. During play a vertical line marks the current quarter note on each click.
 
@@ -91,7 +90,7 @@ export function layoutSignatureV1(signature: SignatureV1): NotationLayout;
 
 Staff positions (spec §7.1): `hihat-closed` in the space above the top line (`staffLines[0] − gap/2`), `snare` in the third space from the bottom (between `staffLines[1]` and `staffLines[2]`), `kick` in the bottom space (between `staffLines[3]` and `staffLines[4]`). Comments sit above every stem top and beam. Counts sit below the bottom line. Exact numbers are the builder's (spec §12); the brainstorming mockup used a 560 × 150 space, slot step 52, and line gap 10.
 
-- [ ] **Step 1: Write the failing tests** (build signatures with a small `grid("HK H HS …")` helper in the test, same notation as spec §5.1):
+- [x] **Step 1: Write the failing tests** (build signatures with a small `grid("HK H HS …")` helper in the test, same notation as spec §5.1):
   - **money beat** `HK H HS H HK H HS H`: 12 noteheads (8 `x` hi-hat, 2 kick, 2 snare), 8 stems, 4 beams, 0 flags, 0 rests;
   - **geometry**: `slotX` has 8 values with one constant step; `beatX` equals `[slotX[0], slotX[2], slotX[4], slotX[6]]`; `staffLines` has 5 equal gaps; hi-hat `y < staffLines[0]`; snare `staffLines[1] < y < staffLines[2]`; kick `staffLines[3] < y < staffLines[4]`; every glyph `x` lies within `[0, width]`;
   - **one empty slot in a beat** `S - S S S S S S`: beat 1 gives one flag at slot 0's stem and one `eighth` rest at `slotX[1]`; no beam for beat 1, beams for beats 2–4;
@@ -100,10 +99,10 @@ Staff positions (spec §7.1): `hihat-closed` in the space above the top line (`s
   - **three instruments** `HSK` in slot 0: 3 noteheads at the same `x`; its stem has `yBottom` ≥ the kick notehead's `y` and `yTop` < the hi-hat notehead's `y`;
   - **comments**: Single strokes `S(R) S(L) …` gives 8 comments with texts `R L R L R L R L`, each with `y` smaller than every beam `y` and every stem `yTop`; a comment on a rest slot (`-(R) S …`) is present at that slot's `x`;
   - **counts**: 8 texts `1 & 2 & 3 & 4 &` at `slotX`, each `y` greater than `staffLines[4]`.
-- [ ] **Step 2: Run** `scripts/with-node.sh pnpm --filter @drum-tutor/web test -- notation-layout`. Expected: FAIL, module missing.
-- [ ] **Step 3: Implement** `layoutSignatureV1` in `notation-layout.ts`. Geometry constants live at the top of the file. A stem runs from just below its lowest notehead (or at it) up to one shared stem-top `y` for the whole bar, so beams are horizontal.
-- [ ] **Step 4: Run** the test. Expected: PASS.
-- [ ] **Step 5: Checkpoint.** `pnpm format`. Files: the two above.
+- [x] **Step 2: Run** `scripts/with-node.sh pnpm --filter @drum-tutor/web test -- notation-layout`. Expected: FAIL, module missing.
+- [x] **Step 3: Implement** `layoutSignatureV1` in `notation-layout.ts`. Geometry constants live at the top of the file. A stem runs from just below its lowest notehead (or at it) up to one shared stem-top `y` for the whole bar, so beams are horizontal.
+- [x] **Step 4: Run** the test. Expected: PASS.
+- [x] **Step 5: Checkpoint.** `pnpm format`. Files: the two above.
 
 ### Task 2: Count-in number and current beat
 
@@ -119,15 +118,15 @@ Staff positions (spec §7.1): `hihat-closed` in the space above the top line (`s
   - `countInNumber(plan: ClickPlan, now: number): number`: `4 − i` where `i` is the index of the latest count-in click with `time ≤ now`, `0` before the first click. The result is always 1–4.
   - `currentBeat(plan: ClickPlan, now: number): number | null`: `null` when `now < exerciseStart` or `now ≥ end`; otherwise `floor((now − exerciseStart) / beatSeconds) mod 4` (0 = beat 1), computed with the same `1e-9` tolerance as `clicksInWindow`, so a frame exactly on a click shows the new beat.
 
-- [ ] **Step 1: Write the failing tests** with `planClicks({ startTime: 10, tempoBpm: 120, durationSeconds: 30 })` (beat 0.5 s, count-in clicks at 10, 10.5, 11, 11.5, exerciseStart 12, end 42):
+- [x] **Step 1: Write the failing tests** with `planClicks({ startTime: 10, tempoBpm: 120, durationSeconds: 30 })` (beat 0.5 s, count-in clicks at 10, 10.5, 11, 11.5, exerciseStart 12, end 42):
   - `countInNumber` at 9.9 → 4, at 10 → 4, at 10.49 → 4, at 10.5 → 3, at 11 → 2, at 11.5 → 1, at 11.99 → 1, at 12.3 → 1 (clamped, never 0);
   - `currentBeat` at 11.99 → `null`, at 12 → 0, at 12.49 → 0, at 12.5 → 1, at 13.5 → 3, at 14 → 0 (next bar), at 41.99 → 3, at 42 → `null`, at 50 → `null`;
   - a click time accumulated by float steps (`12 + 0.5 * 3`, computed as `exerciseStart + k * beatSeconds`) → beat 3, not 2;
   - end mid-bar: `planClicks({ startTime: 0, tempoBpm: 70, durationSeconds: 30 })` → `currentBeat(plan, plan.end - 1e-6)` is a number and `currentBeat(plan, plan.end)` is `null`.
-- [ ] **Step 2: Run** `scripts/with-node.sh pnpm --filter @drum-tutor/web test -- click-schedule`. Expected: FAIL (functions missing).
-- [ ] **Step 3: Implement** both functions in `click-schedule.ts`.
-- [ ] **Step 4: Run** the test. Expected: PASS.
-- [ ] **Step 5: Checkpoint.** `pnpm format`. Files: the two above.
+- [x] **Step 2: Run** `scripts/with-node.sh pnpm --filter @drum-tutor/web test -- click-schedule`. Expected: FAIL (functions missing).
+- [x] **Step 3: Implement** both functions in `click-schedule.ts`.
+- [x] **Step 4: Run** the test. Expected: PASS.
+- [x] **Step 5: Checkpoint.** `pnpm format`. Files: the two above.
 
 ### Task 3: Notation component, lesson page and visual beat
 
@@ -155,7 +154,7 @@ export function SignatureNotation(props: {
 }): JSX.Element;
 ```
 
-- [ ] **Step 1: Build `SignatureNotation`.** It switches on `signature.version` (only `"v1"`; the `switch` is exhaustive, so a future version fails typecheck until it has a branch). It draws `layoutSignatureV1(signature)` into `<svg viewBox="0 0 {width} {height}" className="w-full h-auto" role="img" aria-label="Drum notation: one bar of 4/4">`:
+- [x] **Step 1: Build `SignatureNotation`.** It switches on `signature.version` (only `"v1"`; the `switch` is exhaustive, so a future version fails typecheck until it has a branch). It draws `layoutSignatureV1(signature)` into `<svg viewBox="0 0 {width} {height}" className="w-full h-auto" role="img" aria-label="Drum notation: one bar of 4/4">`:
   - five staff lines, the percussion clef (two short thick bars), `4` over `4`, the final barline;
   - x noteheads as two crossing lines and filled noteheads as tilted ellipses;
   - stems, beams, flags, eighth and quarter rests (simple hand-drawn paths), comments (semibold) and counts (small, muted).
@@ -163,24 +162,41 @@ export function SignatureNotation(props: {
     - `count-in`: the SVG gets `opacity-35 grayscale`. A centred overlay `<div>` holds the number in a large bold font on a `bg-background/80` plate with rounded corners and a soft shadow. It has `data-testid="count-in-number"`.
     - `playing` with a beat: a soft band behind the staff plus a vertical line at `beatX[beat]`, both in `text-primary`. The SVG gets `data-beat={beat + 1}`.
   - The wrapper is `relative` so the overlay can sit on top.
-- [ ] **Step 2: Wire the visual into `PracticePanel`.**
+- [x] **Step 2: Wire the visual into `PracticePanel`.**
   - Add state `countIn: number` and `beat: number | null`, both primitives. In the existing animation-frame `refresh`, set them from `countInNumber(plan, now)` and `currentBeat(plan, now)`. Reset to `4` / `null` in `start()` and whenever the panel leaves `count-in` / `playing`.
   - Derive `visual`: `count-in` status → `{ kind: "count-in", number: countIn }`; `playing` → `{ kind: "playing", beat }`; any other status → `{ kind: "static" }`.
   - Render the notation card (shadcn `Card` or a bordered `div` matching the old box's radius) as the first child of the panel's `<section>`. That keeps it above the controls in every state.
-- [ ] **Step 3: Update `LessonDetails`.** Remove the "Sheet coming soon" box. The practice panel now renders the notation above its controls. Keep the loading skeleton's `h-40` block, which stands for the notation.
-- [ ] **Step 4: Run** `scripts/with-node.sh pnpm lint && scripts/with-node.sh pnpm typecheck --force && scripts/with-node.sh pnpm test`. Expected: all PASS.
-- [ ] **Step 5: Verify in the browser** (`local-dev` skill, Playwright plugin, after `db:seed`, fresh email). Install the click recorder from the skill's Practice flows.
+- [x] **Step 3: Update `LessonDetails`.** Remove the "Sheet coming soon" box. The practice panel now renders the notation above its controls. Keep the loading skeleton's `h-40` block, which stands for the notation.
+- [x] **Step 4: Run** `scripts/with-node.sh pnpm lint && scripts/with-node.sh pnpm typecheck --force && scripts/with-node.sh pnpm test`. Expected: all PASS.
+- [x] **Step 5: Verify in the browser** (`local-dev` skill, Playwright plugin, after `db:seed`, fresh email). Install the click recorder from the skill's Practice flows.
   - **Static notation:** "Money beat" shows 8 x noteheads above the staff, kicks on 1 and 3, snares on 2 and 4, four beams, counts below. "Single strokes on a pad" shows `R L R L R L R L` above the notes. "Quarter-note kick control" shows kicks with flags and eighth rests. "Offbeat snare reading" shows rests on the beats. No "Sheet coming soon" anywhere. Take one screenshot per lesson as evidence.
   - **Count-in:** at 60 BPM, Start → the notation is greyed and `count-in-number` reads `4`, `3`, `2`, `1` in step with the 4 recorded count-in clicks (sample the text with `browser_evaluate` every 100 ms and compare against `__clicks[i].when` mapped through the page's `AudioContext.currentTime`).
   - **Playing:** after the count-in, the SVG's `data-beat` goes `1, 2, 3, 4, 1, …`, changing within one frame of each recorded exercise click. Stop → no `data-beat`, no overlay, notation not greyed.
   - **End mid-bar:** a 0:30 session at 70 BPM ends with the notation static, and no highlight after `Completed`.
   - **Review Focus 3:** with a temporary render counter (`console.count` in `SignatureNotation`), 10 s of play at 120 BPM produce about 20 renders, not about 600. Remove the counter.
   - **Review Focus 5:** at a 375 px wide viewport the notation fits the column with no horizontal scroll. In dark mode (`browser_emulate_media` `colorScheme: "dark"`) staff and notes are light on dark.
-- [ ] **Step 6: Update docs.**
+- [x] **Step 6: Update docs.**
   - In the `local-dev` skill: Library flow 11 shows the notation instead of "Sheet coming soon" and a working Start. Flow 13 no longer forbids notation, only rating. Practice flow 2 describes the greyed count-in with `4 3 2 1` and the `data-beat` highlight. Add the checks from Step 5 as a short "Notation" list.
   - Set ADR-0040 and its index row to `repaid in ADR-0054` (spec §10 and its changelog).
-- [ ] **Step 7: Checkpoint.** `pnpm format`. Tick this plan's checkboxes, set its status to `done`, update the signature row in `docs/specs/README.md`. Files: the files of this task.
+- [x] **Step 7: Checkpoint.** `pnpm format`. Tick this plan's checkboxes, set its status to `done`, update the signature row in `docs/specs/README.md`. Files: the files of this task.
 
 ## Execution notes
 
 <!-- Filled in during execution: any decision taken while building. -->
+
+- **Commits.** None during execution; the user commits when they ask.
+- **Task 3, geometry.** After the first screenshot the notation height went from 156 to 124 and the counts moved up (`COUNT_Y` 116), because the space between the staff and the counts was too large.
+- **Task 3, browser check (2026-10-26).**
+  - Money beat, Single strokes, Quarter-note kick control, Offbeat snare reading and Linear eighths draw as specified.
+  - At 60 BPM, the count-in number (4→3→2→1) and `data-beat` (1→2→3→4→1) change within one 50 ms sample of each recorded click.
+  - A 0:30 session at 70 BPM loses the highlight exactly at `end` (33.529 s on the audio clock).
+  - 136 notation renders in about 34 s under StrictMode (about 68 real ones), not one per frame.
+  - At 375 px the notation fits (293 px). Only the header's "Log out" overflows, which is pre-existing (ADR-0047).
+  - The app has no dark theme yet, so dark mode only proves the notation follows the theme tokens.
+- **Formatting.** Biome is the repo's Markdown formatter. Earlier `npx prettier --write` runs on docs added blank lines that Biome removes. Docs are formatted with `pnpm format` only from here on.
+- **Final review fixes (plans 02 + 03 reviewed together).** These were re-graded Important because the code contradicted ADR-0054 or this plan.
+  - The panel's visual comes from a pure `notationVisual(status, countIn, beat)` in `click-schedule.ts`. Once the clock reaches the exercise, the beat wins over a `count-in` status the metronome loop has not updated yet. Before this, beat 1 lit up to one 25 ms loop tick late.
+  - Clef bars, the `4/4` and the highlight bands are now `NotationLayout` fields (`clefBars`, `timeSignature`, `highlights`), with tests. The component does no geometry of its own.
+  - `SignatureNotation` returns `ReactElement`, so a new signature version without a branch fails typecheck. This was probed with a temporary `v2` union member: TS2366.
+  - The highlight uses a new theme token `--beat` (`oklch(0.6 0.19 255)` light, `oklch(0.72 0.16 255)` dark), the only accent in the monochrome theme. `text-primary` was as dark as the notes.
+  - Re-measured with a MutationObserver against `AudioContext.currentTime`: every count-in and beat change lands 15–28 ms after its click (one frame plus Chrome's clock steps). Beat 1 is no longer an outlier.

@@ -314,7 +314,6 @@ Used by the library filter and the lesson form.
 | Tags        | tag picker (§6.3), selected tags as removable Badges                                                                                                                  | none             |
 | Tempo       | Slider 30–300 step 1, kept in sync with a number Input next to it ("BPM"). An out-of-range typed value shows the schema error; the slider keeps the last valid value. | 60               |
 | Duration    | Read-only `MM:SS` display between a "−" and a "+" Button; each press changes the value by 30 s. "−" is disabled at 00:30, "+" at 60:00. **No typing.**                | 03:00            |
-
 - Field errors come from the contract schema and show under the field. While saving, fields and buttons are disabled and Save shows a spinner (foundation pattern).
 - **Create** → `POST`, success toast "Lesson created", navigate to `/admin/lessons`.
 - **Edit** loads `GET /api/admin/lessons/:id`. The page is reachable for a locked lesson only by typing its URL, since the menu item is disabled. If `locked`, an Alert "This lesson is locked — someone has already practiced it, so it can't be edited or deleted." appears above the form and every field and Save are disabled. A `409 LESSON_LOCKED` on save (the lesson got locked meanwhile) shows the global toast and refetches the lesson, which turns on the locked state.

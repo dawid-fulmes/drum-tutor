@@ -1,6 +1,6 @@
 # Signature — Spec
 
-- **Status:** approved
+- **Status:** implemented
 - **Date:** 2026-10-26
 - **Related:** PRD §4.1, §4.2, US-6, US-9, US-17, US-17a; R7, R11; ADR-0004, ADR-0005, ADR-0008, ADR-0016, ADR-0020, ADR-0021, ADR-0022, ADR-0040, ADR-0050 – ADR-0054
 - **Plans:** [plan-01-backend.md](plan-01-backend.md), [plan-02-notation-and-player.md](plan-02-notation-and-player.md), [plan-03-admin-editor.md](plan-03-admin-editor.md)
@@ -141,7 +141,6 @@ Grid notation: `H` = `hihat-closed`, `S` = `snare`, `K` = `kick`, `-` = rest. Sl
 | 15  | Paradiddle groove         | advanced     | 80    | 5   | draft     | Rudiments, Groove                 | HK(R) S(L) H(R) H(R) SK(L) H(R) S(L) S(L) |
 | 16  | Kick and snare call       | beginner     | 75    | 3   | draft     | Kick drum foot                    | K - S - K K S -                           |
 | 17  | Hi-hat foot chicks on 2&4 | beginner     | 65    | 3   | draft     | Hi-hat foot, Groove               | empty (8 rests)                           |
-
 - The lessons that get the seed user's practice history are **1, 2 and 5** (Money beat, Single paradiddles, Weak hand eighth notes). Together they cover Groove, Rudiments, Hand speed and Weak hand, as before.
 - Lesson 17 is a deliberate draft with an empty signature: v1 has no hi-hat foot, so it cannot be written down yet. It lets local testing exercise the publish rule (§6.2). Its description says so.
 - Every lesson gets a two-to-three sentence description in the tone of the current seed that matches its signature: what to play, what to focus on, and a tempo hint. Single-hand comments (`R`, `L`) appear only where the sticking is the point of the exercise. Grooves without comments rely on the standard right hand on the hi-hat.
@@ -171,7 +170,6 @@ New error code: `SIGNATURE_EMPTY` (`409`), message "Add at least one note to the
 | `POST …/:id/publish`                  | Signature without notes → `409 SIGNATURE_EMPTY`, even for an already published lesson. Otherwise as before (idempotent). This changes the `lessons-and-tags` rule "publishing does not require a signature" (ADR-0053); the route's response schema gains `409`. |
 | `POST …/:id/unpublish`                | Unchanged.                                                                                                                                                                                                                                                       |
 | `GET` (drummer and admin detail)      | Returns the stored signature as is.                                                                                                                                                                                                                              |
-
 - An invalid signature in the body → `400 VALIDATION_ERROR` with `details` paths such as `signature.slots.3.comment` (ADR-0022).
 - The publish check reads the signature in the same transaction as the status update.
 - Lesson locking (R7) needs no new code: the signature is a lesson column, so editing it is covered by the existing lock.
@@ -206,7 +204,6 @@ One React component draws a `Signature` and is used by both the lesson page and 
 | `setup` (including after a stop), `saving`, `saved`, `save-failed`, `save-rejected` | Static.                                                                                                                                                                                             |
 | `count-in`                                                                          | Greyed out (reduced opacity, desaturated). Centred on top, a large bold number on a translucent white plate (dark-mode equivalent in the dark theme) counts down **4 → 3 → 2 → 1**.                 |
 | `playing`                                                                           | Static notation plus a highlight at the **current quarter note**: a vertical line through the staff at that beat's first slot, with a soft band behind it. It moves to the next beat on each click. |
-
 - **Timing (ADR-0054).** Both visuals are derived from `audioContext.currentTime` in the panel's existing animation-frame loop, from the existing click plan:
   - count-in number = `4 − i`, where `i` is the index of the latest count-in click already due (`0` before the first click, so `4` shows from the start of the count-in);
   - current beat = `floor((now − exerciseStart) / beatSeconds) mod 4`, from `exerciseStart` on.

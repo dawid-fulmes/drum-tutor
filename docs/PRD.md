@@ -77,6 +77,7 @@ A lesson is a single exercise (e.g. "single strokes on a pad in eighth notes", "
 - Each slot has:
   - a list of instruments played on that slot — allowed values: `snare`, `hihat-closed`, `kick` (an empty list = rest);
   - an optional short comment (e.g. sticking `R` / `L`).
+- The signature is stored with a format version (`v1` today) and drawn as drum notation. A lesson can be published only when its signature has at least one note (ADR-0050, ADR-0051, ADR-0053).
 
 Examples:
 - **Single strokes on a pad:** 8 slots, each with `snare`, comments alternating `R`, `L`, `R`, `L`…
@@ -105,7 +106,7 @@ Created only when an exercise runs to the end. Contains:
 
 ## 5. User stories
 
-A checked story is implemented and verified end to end. The scope that delivered it is listed in [docs/specs/](specs/README.md) (US-1: `project-foundation`; US-3, US-4, US-16, US-17a, US-18, US-19: `lessons-and-tags`; US-7, US-8, US-9, US-10, US-11, US-11a, US-11b, US-14, US-15: `practice-and-stats`).
+A checked story is implemented and verified end to end. The scope that delivered it is listed in [docs/specs/](specs/README.md) (US-1: `project-foundation`; US-3, US-4, US-16, US-17a, US-18, US-19: `lessons-and-tags`; US-7, US-8, US-9, US-10, US-11, US-11a, US-11b, US-14, US-15: `practice-and-stats`; US-17: `signature`).
 
 ### 5.1 Identification
 
@@ -120,7 +121,7 @@ A checked story is implemented and verified end to end. The scope that delivered
 
 ### 5.3 Lesson start screen
 
-- [ ] **US-6** As a drummer, I open a lesson and see its name, description, difficulty, tags, rating and the signature rendered from its configuration.
+- [ ] **US-6** As a drummer, I open a lesson and see its name, description, difficulty, tags, rating and the signature rendered from its configuration. _(signature part delivered by `signature`; rating still missing.)_
 - [x] **US-7** As a drummer, before starting, I can change the tempo and the duration (pre-filled with the recommended values, within the allowed ranges).
 
 ### 5.4 Practice session
@@ -150,7 +151,7 @@ A checked story is implemented and verified end to end. The scope that delivered
 ### 5.7 Admin panel (`/admin`)
 
 - [x] **US-16** As an admin, I manage the tag dictionary: add tags, rename tags (always allowed), delete tags (only when not assigned to any lesson). Tag names are unique.
-- [ ] **US-17** As an admin, I create a lesson with all properties from 4.1, including building the 8-slot signature (instruments + comment per slot). A new lesson starts as a **draft**, invisible to drummers, which I can freely edit or delete.
+- [x] **US-17** As an admin, I create a lesson with all properties from 4.1, including building the 8-slot signature (instruments + comment per slot). A new lesson starts as a **draft**, invisible to drummers, which I can freely edit or delete.
 - [x] **US-17a** As an admin, I **publish** a draft to make it visible in the library. As long as nobody has completed the lesson yet, I can move it back to **draft**; once it has at least one practice log, it stays published.
 - [x] **US-18** As an admin, I can edit or delete a lesson **only if no user has completed it yet**. Once at least one practice log exists, the lesson is locked (this keeps historical statistics stable).
 - [x] **US-19** As an admin, I see the list of lessons with their status (draft / published) and can tell which ones are locked.
@@ -182,5 +183,5 @@ A checked story is implemented and verified end to end. The scope that delivered
 
 - Real authentication and a protected admin role.
 - Editing lessons that already have logs (requires deciding how historical statistics react to changed tags).
-- Pause, groove playback, richer notation (other meters, sixteenths, more instruments, multi-bar patterns).
+- Pause, groove playback, richer notation (other meters, sixteenths, more instruments, multi-bar patterns; see ADR-0051).
 - More statistics (total time, streaks, goals), search, social features, payments.

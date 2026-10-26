@@ -1,7 +1,7 @@
 # ADR-0040: Ship the practice player without the signature and without a visual beat
 
 - **Type:** tech-debt
-- **Status:** open
+- **Status:** repaid in ADR-0054
 - **Date:** 2026-10-25
 - **Related:** PRD §4.2, US-6, US-9, US-17; ADR-0005, ADR-0016, ADR-0030; specs/practice-and-stats
 
