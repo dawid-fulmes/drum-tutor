@@ -1,7 +1,7 @@
 # ADR-0031: Leave rating out of the library contract and UI until the rating scope
 
 - **Type:** decision
-- **Status:** accepted
+- **Status:** superseded by ADR-0059
 - **Date:** 2026-10-25
 - **Related:** PRD US-2, US-5, US-6, US-12, US-13, R3, R4; ADR-0010, ADR-0012; specs/lessons-and-tags
 
