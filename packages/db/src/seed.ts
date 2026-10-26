@@ -1,6 +1,15 @@
 import { randomUUID } from "node:crypto";
 import type { Database } from "./client";
-import { type LessonSignatureJson, lessons, lessonTags, practiceLogs, tags, users } from "./schema";
+import { recomputeLessonRating } from "./ratings";
+import {
+  type LessonSignatureJson,
+  lessonRatings,
+  lessons,
+  lessonTags,
+  practiceLogs,
+  tags,
+  users,
+} from "./schema";
 
 type Difficulty = "beginner" | "intermediate" | "advanced";
 
@@ -251,10 +260,24 @@ function signatureFromGrid(grid: string): LessonSignatureJson {
   return { version: "v1", slots };
 }
 
-// Published lessons that get the seed user's practice (and so are locked): Money beat, Single
-// paradiddles and Weak hand eighth notes. Together they cover four tags: Groove, Rudiments, Hand speed
-// and Weak hand.
+// The seed user's practised lessons (locked by those logs): Money beat, Single paradiddles and Weak
+// hand eighth notes. Together they cover four tags: Groove, Rudiments, Hand speed and Weak hand.
+// The other rated lessons are locked by their raters' own practice logs.
 const LOGGED_LESSON_INDEXES = [1, 2, 5] as const;
+
+// Ratings by lesson index (signature spec §5.1 numbering; rating spec §5.3). `seedUser` is the
+// seed user's rating, `raters[k]` the rating of rater{k+1}@example.com.
+const RATINGS: Record<number, { seedUser?: number; raters: readonly number[] }> = {
+  4: { raters: [5, 5, 4, 5, 4, 5] },
+  1: { seedUser: 5, raters: [4, 5, 5, 4] },
+  0: { raters: [4, 5, 4, 5, 4, 5] },
+  6: { raters: [5, 4] },
+  2: { seedUser: 4, raters: [4, 3, 5] },
+  8: { raters: [4] },
+  5: { raters: [3, 4, 3] },
+  3: { raters: [2, 3] },
+};
+const RATER_COUNT = 6;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -307,6 +330,7 @@ function practiceHistory(now: number): SeedLog[] {
 /** Replaces all lesson data with the demo dataset (spec §4, "Seed"). Users are kept. */
 export async function seedDatabase(db: Database): Promise<void> {
   await db.transaction(async (tx) => {
+    await tx.delete(lessonRatings);
     await tx.delete(practiceLogs);
     await tx.delete(lessonTags);
     await tx.delete(lessons);
@@ -370,6 +394,48 @@ export async function seedDatabase(db: Database): Promise<void> {
     }));
     for (let i = 0; i < rows.length; i += 500) {
       await tx.insert(practiceLogs).values(rows.slice(i, i + 500));
+    }
+
+    // Raters: one log per rated lesson (yesterday 17:00 UTC) before the rating, so R3 holds.
+    const raterIds: string[] = [];
+    for (let k = 1; k <= RATER_COUNT; k++) {
+      const email = `rater${k}@example.com`;
+      const [rater] = await tx
+        .insert(users)
+        .values({ email })
+        .onConflictDoUpdate({ target: users.email, set: { email } })
+        .returning();
+      raterIds.push((rater as { id: string }).id);
+    }
+    const yesterday = new Date(now - DAY_MS);
+    const localDate = yesterday.toISOString().slice(0, 10);
+    const completedAt = new Date(`${localDate}T17:00:00.000Z`);
+    const ratingRows: { lessonId: string; userId: string; rating: number }[] = [];
+    const raterLogs: (typeof practiceLogs.$inferInsert)[] = [];
+    for (const [index, entry] of Object.entries(RATINGS)) {
+      const lesson = LESSONS[Number(index)] as SeedLesson;
+      const lessonId = idByName.get(lesson.name) as string;
+      if (entry.seedUser !== undefined) {
+        ratingRows.push({ lessonId, userId, rating: entry.seedUser });
+      }
+      entry.raters.forEach((rating, k) => {
+        const raterId = raterIds[k] as string;
+        raterLogs.push({
+          userId: raterId,
+          lessonId,
+          durationSeconds: 180,
+          tempoBpm: lesson.tempo,
+          completedAt,
+          localDate,
+          idempotencyKey: randomUUID(),
+        });
+        ratingRows.push({ lessonId, userId: raterId, rating });
+      });
+    }
+    await tx.insert(practiceLogs).values(raterLogs);
+    await tx.insert(lessonRatings).values(ratingRows);
+    for (const lessonId of new Set(ratingRows.map((r) => r.lessonId))) {
+      await recomputeLessonRating(tx, lessonId);
     }
   });
 }

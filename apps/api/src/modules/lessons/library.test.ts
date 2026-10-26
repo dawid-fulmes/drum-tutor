@@ -8,7 +8,15 @@ import {
 } from "@drum-tutor/contracts";
 import type { TagRow } from "@drum-tutor/db";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { insertLesson, insertTag, loginCookies, TEST_SIGNATURE } from "../../../test/fixtures";
+import {
+  insertLesson,
+  insertPracticeLog,
+  insertRating,
+  insertTag,
+  insertUser,
+  loginCookies,
+  TEST_SIGNATURE,
+} from "../../../test/fixtures";
 import { createTestApp, resetDatabase } from "../../../test/helpers";
 
 const LibraryPageSchema = pageSchema(LessonSummarySchema);
@@ -133,6 +141,168 @@ describe("drummer library endpoints", () => {
       const idsOf = async (query: string) => (await listPage(query)).items.map((i) => i.id);
       expect(await idsOf("?sort=newest")).toEqual([...ids].reverse());
       expect(await idsOf("?sort=oldest")).toEqual(ids);
+    });
+  });
+
+  describe("rating", () => {
+    const rateAll = async (lessonId: string, values: number[]) => {
+      for (const [i, rating] of values.entries()) {
+        const user = await insertUser(ctx.db, `rater-${lessonId}-${i}@example.com`);
+        await insertRating(ctx.db, { lessonId, userId: user.id, rating });
+      }
+    };
+    const detail = async (id: string) => {
+      const res = await ctx.app.inject({
+        method: "GET",
+        url: withId(ApiPaths.lesson, id),
+        cookies,
+      });
+      expect(res.statusCode).toBe(200);
+      return LessonDetailSchema.parse(res.json());
+    };
+    const currentUserId = async () => (await insertUser(ctx.db, "user@example.com")).id;
+
+    it("lists an unrated lesson with a null average", async () => {
+      await published({ name: "Unrated", tagIds: [a.id] });
+      expect((await listPage()).items[0]?.rating).toEqual({ average: null, count: 0 });
+    });
+
+    it("carries the average and count in the list and the detail", async () => {
+      const lesson = await published({ name: "Rated", tagIds: [a.id] });
+      await rateAll(lesson.id, [5, 4, 4]);
+      expect((await listPage()).items[0]?.rating).toEqual({ average: 4.33, count: 3 });
+      expect((await detail(lesson.id)).rating).toEqual({ average: 4.33, count: 3 });
+    });
+
+    describe("order", () => {
+      const seed = async () => {
+        const at = (iso: string) => new Date(iso);
+        const lessonsByName: Record<string, string> = {};
+        const make = async (name: string, createdAt: string, ratings: number[]) => {
+          const lesson = await published({ name, tagIds: [a.id], createdAt: at(createdAt) });
+          lessonsByName[name] = lesson.id;
+          await rateAll(lesson.id, ratings);
+        };
+        await make("A", "2026-01-01", [5, 4]);
+        await make("B", "2026-01-02", [5, 4, 5, 4]);
+        await make("C", "2026-01-03", [5]);
+        await make("D", "2026-01-04", []);
+        await make("E", "2026-01-05", []);
+        return lessonsByName;
+      };
+
+      it("sorts by average, then count, then newest, with unrated last", async () => {
+        await seed();
+        expect(await names("?sort=rating")).toEqual(["C", "B", "A", "E", "D"]);
+        expect(await names()).toEqual(["C", "B", "A", "E", "D"]);
+      });
+
+      it("keeps the created_at order for newest and oldest on rated lessons", async () => {
+        await seed();
+        expect(await names("?sort=newest")).toEqual(["E", "D", "C", "B", "A"]);
+        expect(await names("?sort=oldest")).toEqual(["A", "B", "C", "D", "E"]);
+      });
+
+      it("puts the newer lesson first when average and count are equal", async () => {
+        const older = await published({
+          name: "Older",
+          tagIds: [a.id],
+          createdAt: new Date("2026-01-01"),
+        });
+        const newer = await published({
+          name: "Newer",
+          tagIds: [a.id],
+          createdAt: new Date("2026-02-01"),
+        });
+        await rateAll(older.id, [4, 5]);
+        await rateAll(newer.id, [4, 5]);
+        expect(await names("?sort=rating")).toEqual(["Newer", "Older"]);
+      });
+
+      it("pages through ties and the rated/unrated boundary without gaps or repeats", async () => {
+        await seed();
+        const all: string[] = [];
+        for (const page of [1, 2, 3]) {
+          const p = await listPage(`?pageSize=2&page=${page}`);
+          expect(p.totalItems).toBe(5);
+          all.push(...p.items.map((i) => i.name));
+        }
+        expect(all).toEqual(["C", "B", "A", "E", "D"]);
+      });
+
+      it("falls back to created_at then id for identical ratings", async () => {
+        const createdAt = new Date("2026-01-01");
+        const rows = await Promise.all(
+          ["x", "y", "z"].map((name) => published({ name, tagIds: [a.id], createdAt })),
+        );
+        for (const row of rows) await rateAll(row.id, [4]);
+        const ids = (await listPage()).items.map((i) => i.id);
+        expect(ids).toEqual(
+          rows
+            .map((r) => r.id)
+            .sort()
+            .reverse(),
+        );
+      });
+
+      it("keeps the filters and counts only the filtered set", async () => {
+        const hard1 = await published({ name: "Hard1", difficulty: "advanced", tagIds: [a.id] });
+        const hard2 = await published({ name: "Hard2", difficulty: "advanced", tagIds: [b.id] });
+        const easy = await published({ name: "Easy", difficulty: "beginner", tagIds: [a.id] });
+        await rateAll(hard1.id, [3]);
+        await rateAll(hard2.id, [5]);
+        await rateAll(easy.id, [5, 5]);
+        const advanced = await listPage("?difficulties=advanced");
+        expect(advanced.items.map((i) => i.name)).toEqual(["Hard2", "Hard1"]);
+        expect(advanced.totalItems).toBe(2);
+        const tagged = await listPage(`?tagIds=${a.id}`);
+        expect(tagged.items.map((i) => i.name)).toEqual(["Easy", "Hard1"]);
+        expect(tagged.totalItems).toBe(2);
+      });
+    });
+
+    describe("detail: myRating and canRate", () => {
+      it("is not rateable without a log", async () => {
+        const lesson = await published({ name: "L", tagIds: [a.id] });
+        const body = await detail(lesson.id);
+        expect(body.canRate).toBe(false);
+        expect(body.myRating).toBeNull();
+      });
+
+      it("is not rateable with a log of another lesson only", async () => {
+        const lesson = await published({ name: "L", tagIds: [a.id] });
+        const other = await published({ name: "Other", tagIds: [a.id] });
+        await insertPracticeLog(ctx.db, other.id, { userId: await currentUserId() });
+        expect((await detail(lesson.id)).canRate).toBe(false);
+      });
+
+      it("is rateable with a log and not yet rated", async () => {
+        const lesson = await published({ name: "L", tagIds: [a.id] });
+        await insertPracticeLog(ctx.db, lesson.id, { userId: await currentUserId() });
+        const body = await detail(lesson.id);
+        expect(body.canRate).toBe(true);
+        expect(body.myRating).toBeNull();
+      });
+
+      it("returns the caller's own rating only", async () => {
+        const lesson = await published({ name: "L", tagIds: [a.id] });
+        const userId = await currentUserId();
+        await insertPracticeLog(ctx.db, lesson.id, { userId });
+        const other = await insertUser(ctx.db, "other@example.com");
+        await insertRating(ctx.db, { lessonId: lesson.id, userId: other.id, rating: 1 });
+        expect((await detail(lesson.id)).myRating).toBeNull();
+        await insertRating(ctx.db, { lessonId: lesson.id, userId, rating: 3 });
+        const body = await detail(lesson.id);
+        expect(body.myRating).toBe(3);
+        expect(body.rating).toEqual({ average: 2, count: 2 });
+      });
+
+      it("leaves myRating and canRate out of the list", async () => {
+        await published({ name: "L", tagIds: [a.id] });
+        const item = (await list()).json().items[0];
+        expect(item).not.toHaveProperty("myRating");
+        expect(item).not.toHaveProperty("canRate");
+      });
     });
   });
 

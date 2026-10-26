@@ -29,6 +29,13 @@
       "when": 1793004767500,
       "tag": "0003_lesson_signature",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793012896137,
+      "tag": "0004_lesson_ratings",
+      "breakpoints": true
     }
   ]
 }

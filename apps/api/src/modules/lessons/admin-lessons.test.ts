@@ -16,7 +16,9 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   insertLesson,
   insertPracticeLog,
+  insertRating,
   insertTag,
+  insertUser,
   loginCookies,
   TEST_SIGNATURE,
 } from "../../../test/fixtures";
@@ -372,6 +374,7 @@ describe("admin lesson endpoints", () => {
         recommendedTempoBpm: 120,
         recommendedDurationSeconds: 600,
         signature: MONEY_BEAT,
+        rating: { average: null, count: 0 },
         createdAt: lesson.createdAt.toISOString(),
         status: "published",
         locked: false,
@@ -617,6 +620,21 @@ describe("admin lesson endpoints", () => {
       const second = await get("?page=2&pageSize=2");
       expect(second).toMatchObject({ page: 2, pageSize: 2, totalItems: 3, totalPages: 2 });
       expect(second.items.map((l) => l.id)).toEqual([oldest.id]);
+    });
+
+    it("carries the rating summary in the list and the detail, without caller fields", async () => {
+      const lesson = await insertLesson(ctx.db, { tagIds: [groove.id], status: "published" });
+      for (const [i, rating] of [5, 4, 4].entries()) {
+        const user = await insertUser(ctx.db, `rater-${i}@example.com`);
+        await insertRating(ctx.db, { lessonId: lesson.id, userId: user.id, rating });
+      }
+      const expected = { average: 4.33, count: 3 };
+      const listRes = await ctx.app.inject({ method: "GET", url: ApiPaths.adminLessons, cookies });
+      expect(AdminLessonPageSchema.parse(listRes.json()).items[0]?.rating).toEqual(expected);
+      const detail = (await read(lesson.id)).json();
+      expect(AdminLessonSchema.parse(detail).rating).toEqual(expected);
+      expect(detail).not.toHaveProperty("myRating");
+      expect(detail).not.toHaveProperty("canRate");
     });
 
     it("rejects a pageSize above 100", async () => {

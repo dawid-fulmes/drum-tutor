@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { LessonInputSchema, LibraryQuerySchema } from "./lessons";
+import {
+  AdminLessonSchema,
+  LessonDetailSchema,
+  LessonInputSchema,
+  LibraryQuerySchema,
+} from "./lessons";
 import { EMPTY_SIGNATURE_V1 } from "./signature";
 
 const A = "11111111-1111-4111-8111-111111111111";
@@ -95,7 +100,7 @@ describe("LibraryQuerySchema", () => {
       pageSize: 20,
       tagIds: [],
       difficulties: [],
-      sort: "newest",
+      sort: "rating",
     });
   });
 
@@ -104,5 +109,27 @@ describe("LibraryQuerySchema", () => {
       "advanced",
     ]);
     expect(LibraryQuerySchema.safeParse({ difficulties: "expert" }).success).toBe(false);
+  });
+
+  it.each(["newest", "oldest", "rating"])("accepts sort %s", (sort) => {
+    expect(LibraryQuerySchema.parse({ sort }).sort).toBe(sort);
+  });
+
+  it("rejects an unknown sort", () => {
+    expect(LibraryQuerySchema.safeParse({ sort: "best" }).success).toBe(false);
+  });
+});
+
+describe("lesson response shapes", () => {
+  it("keeps per-user rating fields out of the admin lesson", () => {
+    expect(AdminLessonSchema.shape).not.toHaveProperty("myRating");
+    expect(AdminLessonSchema.shape).not.toHaveProperty("canRate");
+    expect(AdminLessonSchema.shape).toHaveProperty("rating");
+  });
+
+  it("gives the lesson detail the rating summary and per-user fields", () => {
+    expect(LessonDetailSchema.shape).toHaveProperty("rating");
+    expect(LessonDetailSchema.shape).toHaveProperty("myRating");
+    expect(LessonDetailSchema.shape).toHaveProperty("canRate");
   });
 });

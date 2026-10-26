@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { PaginationQuerySchema, queryArray } from "./pagination";
+import { RatingSummarySchema, RatingValueSchema } from "./rating";
 import { SignatureSchema } from "./signature";
 import { TagSchema } from "./tags";
 
@@ -10,7 +11,7 @@ export type Difficulty = z.infer<typeof DifficultySchema>;
 export const LessonStatusSchema = z.enum(["draft", "published"]);
 export type LessonStatus = z.infer<typeof LessonStatusSchema>;
 
-export const LessonSortSchema = z.enum(["newest", "oldest"]);
+export const LessonSortSchema = z.enum(["rating", "newest", "oldest"]);
 export type LessonSort = z.infer<typeof LessonSortSchema>;
 
 export const TEMPO_BPM = { min: 30, max: 300 } as const;
@@ -62,12 +63,19 @@ export const LessonSummarySchema = z.object({
   recommendedTempoBpm: z.number().int(),
   recommendedDurationSeconds: z.number().int(),
   createdAt: z.iso.datetime(),
+  rating: RatingSummarySchema,
 });
 export type LessonSummary = z.infer<typeof LessonSummarySchema>;
 
-export const LessonDetailSchema = LessonSummarySchema.extend({
+export const LessonContentSchema = LessonSummarySchema.extend({
   description: z.string(),
   signature: SignatureSchema,
+});
+export type LessonContent = z.infer<typeof LessonContentSchema>;
+
+export const LessonDetailSchema = LessonContentSchema.extend({
+  myRating: RatingValueSchema.nullable(),
+  canRate: z.boolean(),
 });
 export type LessonDetail = z.infer<typeof LessonDetailSchema>;
 
@@ -76,12 +84,12 @@ const adminFields = { status: LessonStatusSchema, locked: z.boolean() };
 export const AdminLessonSummarySchema = LessonSummarySchema.extend(adminFields);
 export type AdminLessonSummary = z.infer<typeof AdminLessonSummarySchema>;
 
-export const AdminLessonSchema = LessonDetailSchema.extend(adminFields);
+export const AdminLessonSchema = LessonContentSchema.extend(adminFields);
 export type AdminLesson = z.infer<typeof AdminLessonSchema>;
 
 export const LibraryQuerySchema = PaginationQuerySchema.extend({
   tagIds: queryArray(z.uuid(), 20),
   difficulties: queryArray(DifficultySchema, 3),
-  sort: LessonSortSchema.default("newest"),
+  sort: LessonSortSchema.default("rating"),
 });
 export type LibraryQuery = z.output<typeof LibraryQuerySchema>;

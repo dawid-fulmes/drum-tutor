@@ -5,8 +5,8 @@ import {
   type LibraryQuery,
   type Page,
 } from "@drum-tutor/contracts";
-import { type Database, lessons, lessonTags } from "@drum-tutor/db";
-import { and, asc, count, desc, eq, inArray, sql } from "drizzle-orm";
+import { type Database, lessonRatings, lessons, lessonTags, practiceLogs } from "@drum-tutor/db";
+import { and, asc, count, desc, eq, inArray, type SQL, sql } from "drizzle-orm";
 import { pageOffset, toPage } from "../../lib/pagination";
 import { AppError } from "../../plugins/error-handler";
 import { loadTagsForLessons, toLessonSummary } from "./lesson-tags";
@@ -37,15 +37,31 @@ function libraryWhere(db: Database, q: LibraryQuery) {
   );
 }
 
+/** Rating order (ADR-0058) matches `lessons_status_rating_idx`; ties end in the unique `id`. */
+function libraryOrder(sort: LibraryQuery["sort"]): SQL[] {
+  switch (sort) {
+    case "rating":
+      return [
+        sql`${lessons.ratingAvg} desc nulls last`,
+        sql`${lessons.ratingCount} desc nulls last`,
+        sql`${lessons.createdAt} desc nulls last`,
+        sql`${lessons.id} desc nulls last`,
+      ];
+    case "oldest":
+      return [asc(lessons.createdAt), asc(lessons.id)];
+    case "newest":
+      return [desc(lessons.createdAt), desc(lessons.id)];
+  }
+}
+
 export async function listLibrary(db: Database, q: LibraryQuery): Promise<Page<LessonSummary>> {
   const where = libraryWhere(db, q);
-  const direction = q.sort === "oldest" ? asc : desc;
   const [rows, [total]] = await Promise.all([
     db
       .select()
       .from(lessons)
       .where(where)
-      .orderBy(direction(lessons.createdAt), direction(lessons.id))
+      .orderBy(...libraryOrder(q.sort))
       .limit(q.pageSize)
       .offset(pageOffset(q)),
     db.select({ value: count() }).from(lessons).where(where),
@@ -58,16 +74,34 @@ export async function listLibrary(db: Database, q: LibraryQuery): Promise<Page<L
   return toPage(items, q, total?.value ?? 0);
 }
 
-export async function getPublishedLesson(db: Database, id: string): Promise<LessonDetail> {
+export async function getPublishedLesson(
+  db: Database,
+  id: string,
+  userId: string,
+): Promise<LessonDetail> {
   const [row] = await db
     .select()
     .from(lessons)
     .where(and(eq(lessons.id, id), eq(lessons.status, "published")));
   if (!row) throw new AppError(404, ApiErrorCode.NOT_FOUND, "Lesson not found");
-  const tagsByLesson = await loadTagsForLessons(db, [id]);
+  const [tagsByLesson, [mine], [log]] = await Promise.all([
+    loadTagsForLessons(db, [id]),
+    db
+      .select({ rating: lessonRatings.rating })
+      .from(lessonRatings)
+      .where(and(eq(lessonRatings.lessonId, id), eq(lessonRatings.userId, userId))),
+    // `canRate` (R3): the user has logged this lesson at least once.
+    db
+      .select({ id: practiceLogs.id })
+      .from(practiceLogs)
+      .where(and(eq(practiceLogs.lessonId, id), eq(practiceLogs.userId, userId)))
+      .limit(1),
+  ]);
   return {
     ...toLessonSummary(row, tagsByLesson.get(id) ?? []),
     description: row.description,
     signature: toSignature(row.signature),
+    myRating: mine?.rating ?? null,
+    canRate: log !== undefined,
   };
 }

@@ -5,9 +5,11 @@ import {
   index,
   integer,
   jsonb,
+  numeric,
   pgEnum,
   pgTable,
   primaryKey,
+  smallint,
   text,
   timestamp,
   uniqueIndex,
@@ -60,6 +62,9 @@ export const lessons = pgTable(
     recommendedDurationSeconds: integer("recommended_duration_seconds").notNull(),
     status: lessonStatus("status").notNull().default("draft"),
     signature: jsonb("signature").$type<LessonSignatureJson>().notNull(),
+    // Stored aggregate of `lesson_ratings`; written only by `recomputeLessonRating` (ADR-0055).
+    ratingCount: integer("rating_count").notNull().default(0),
+    ratingAvg: numeric("rating_avg", { precision: 3, scale: 2 }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -68,7 +73,20 @@ export const lessons = pgTable(
       "lessons_duration_range",
       sql`${t.recommendedDurationSeconds} between 30 and 3600 and ${t.recommendedDurationSeconds} % 30 = 0`,
     ),
+    check(
+      "lessons_rating_avg_matches_count",
+      sql`(${t.ratingCount} = 0) = (${t.ratingAvg} is null)`,
+    ),
+    check("lessons_rating_avg_range", sql`${t.ratingAvg} between 1 and 5`),
     index("lessons_status_created_at_id_idx").on(t.status, t.createdAt, t.id),
+    // Serves the default library order (ADR-0058).
+    index("lessons_status_rating_idx").on(
+      t.status,
+      t.ratingAvg.desc().nullsLast(),
+      t.ratingCount.desc(),
+      t.createdAt.desc(),
+      t.id.desc(),
+    ),
   ],
 );
 
@@ -123,9 +141,34 @@ export const practiceLogs = pgTable(
   ],
 );
 
+/**
+ * One rating per user and lesson, replaced on rewrite (ADR-0055, ADR-0056). R3 (the user must have
+ * completed the lesson) is checked by the API, not the database.
+ */
+export const lessonRatings = pgTable(
+  "lesson_ratings",
+  {
+    lessonId: uuid("lesson_id")
+      .notNull()
+      .references(() => lessons.id, { onDelete: "restrict" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    rating: smallint("rating").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.lessonId, t.userId] }),
+    check("lesson_ratings_rating_range", sql`${t.rating} between 1 and 5`),
+  ],
+);
+
 export type UserRow = typeof users.$inferSelect;
 export type TagRow = typeof tags.$inferSelect;
 export type LessonRow = typeof lessons.$inferSelect;
 export type NewLessonRow = typeof lessons.$inferInsert;
 export type PracticeLogRow = typeof practiceLogs.$inferSelect;
 export type NewPracticeLogRow = typeof practiceLogs.$inferInsert;
+export type LessonRatingRow = typeof lessonRatings.$inferSelect;
+export type NewLessonRatingRow = typeof lessonRatings.$inferInsert;

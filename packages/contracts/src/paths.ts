@@ -7,6 +7,7 @@ export const ApiPaths = {
   tags: "/api/tags",
   lessons: "/api/lessons",
   lesson: "/api/lessons/:id",
+  lessonRating: "/api/lessons/:id/rating",
   adminTags: "/api/admin/tags",
   adminTag: "/api/admin/tags/:id",
   adminLessons: "/api/admin/lessons",

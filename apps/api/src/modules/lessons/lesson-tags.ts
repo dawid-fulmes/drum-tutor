@@ -1,4 +1,4 @@
-import type { LessonSummary, Tag } from "@drum-tutor/contracts";
+import type { LessonSummary, RatingSummary, Tag } from "@drum-tutor/contracts";
 import { type LessonRow, lessonTags, tags } from "@drum-tutor/db";
 import { asc, eq, inArray, sql } from "drizzle-orm";
 import type { DbExecutor } from "../../lib/db";
@@ -20,6 +20,14 @@ export async function loadTagsForLessons(
   return byLesson;
 }
 
+/** The public rating figures of a lesson, from the stored aggregate (ADR-0055). */
+export function toRatingSummary(row: Pick<LessonRow, "ratingCount" | "ratingAvg">): RatingSummary {
+  return {
+    average: row.ratingAvg === null ? null : Number(row.ratingAvg),
+    count: row.ratingCount,
+  };
+}
+
 export function toLessonSummary(row: LessonRow, tags: Tag[]): LessonSummary {
   return {
     id: row.id,
@@ -28,6 +36,7 @@ export function toLessonSummary(row: LessonRow, tags: Tag[]): LessonSummary {
     tags,
     recommendedTempoBpm: row.recommendedTempoBpm,
     recommendedDurationSeconds: row.recommendedDurationSeconds,
+    rating: toRatingSummary(row),
     createdAt: row.createdAt.toISOString(),
   };
 }

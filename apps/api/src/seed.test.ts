@@ -4,6 +4,8 @@ import {
   AdminTagSchema,
   ApiPaths,
   DailyStatsSchema,
+  LessonDetailSchema,
+  type LessonSummary,
   LessonSummarySchema,
   pageSchema,
   type Signature,
@@ -12,12 +14,24 @@ import {
   withId,
 } from "@drum-tutor/contracts";
 import { seedDatabase, users } from "@drum-tutor/db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { loginCookies } from "../test/fixtures";
 import { createTestApp, resetDatabase } from "../test/helpers";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+// Spec rating §5.3, in the expected library order.
+const RATED = [
+  { name: "Four on the floor", average: 4.67, count: 6 },
+  { name: "Money beat", average: 4.6, count: 5 },
+  { name: "Single strokes on a pad", average: 4.5, count: 6 },
+  { name: "Double strokes", average: 4.5, count: 2 },
+  { name: "Single paradiddles", average: 4, count: 4 },
+  { name: "Disco offbeat hi-hat", average: 4, count: 1 },
+  { name: "Weak hand eighth notes", average: 3.33, count: 3 },
+  { name: "Quarter-note kick control", average: 2.5, count: 2 },
+] as const;
 
 describe("seedDatabase", () => {
   let ctx: Awaited<ReturnType<typeof createTestApp>>;
@@ -56,31 +70,30 @@ describe("seedDatabase", () => {
     );
     expect(admin.items).toHaveLength(18);
     expect(admin.items.filter((i) => i.status === "draft")).toHaveLength(3);
-    // Three published lessons carry the seed user's year of practice (spec §4 "Seed").
+    // Eight published lessons have practice logs: the seed user's three and the raters' (spec rating §5.3).
     const locked = admin.items.filter((i) => i.locked);
-    expect(locked).toHaveLength(3);
+    expect(locked).toHaveLength(8);
     expect(locked.every((i) => i.status === "published")).toBe(true);
     expect(new Set(locked.flatMap((i) => i.tags.map((t) => t.name))).size).toBeGreaterThanOrEqual(
       4,
     );
+    const seedUserLessons = ["Money beat", "Single paradiddles", "Weak hand eighth notes"];
     const thirteenMonthsAgo = new Date();
     thirteenMonthsAgo.setUTCMonth(thirteenMonthsAgo.getUTCMonth() - 13);
     const thirtyOneDaysAgo = Date.now() - 31 * DAY_MS;
     for (const item of admin.items) {
       const createdAt = new Date(item.createdAt).getTime();
-      if (item.locked) expect(createdAt).toBeLessThan(thirteenMonthsAgo.getTime());
-      else expect(createdAt).toBeGreaterThan(thirtyOneDaysAgo);
+      if (seedUserLessons.includes(item.name)) {
+        expect(createdAt).toBeLessThan(thirteenMonthsAgo.getTime());
+      } else expect(createdAt).toBeGreaterThan(thirtyOneDaysAgo);
     }
     for (const item of admin.items) {
       expect(item.tags.length).toBeGreaterThanOrEqual(1);
       expect(item.tags.length).toBeLessThanOrEqual(3);
     }
 
-    expect(locked.map((i) => i.name).sort()).toEqual([
-      "Money beat",
-      "Single paradiddles",
-      "Weak hand eighth notes",
-    ]);
+    expect(locked.map((i) => i.name).sort()).toEqual([...RATED.map((r) => r.name)].sort());
+    await checkRatings(publishedAll.items);
     await checkSignatures(admin.items.map((i) => i.id));
 
     const tagPage = pageSchema(AdminTagSchema).parse(
@@ -91,6 +104,51 @@ describe("seedDatabase", () => {
     );
 
     await checkSeedUserStats(locked[0]?.tags[0]?.id as string);
+  };
+
+  const checkRatings = async (items: LessonSummary[]) => {
+    expect(items.slice(0, 8).map((i) => ({ name: i.name, ...i.rating }))).toEqual(
+      RATED.map((r) => ({ name: r.name, average: r.average, count: r.count })),
+    );
+    const unrated = items.slice(8);
+    expect(unrated).toHaveLength(7);
+    for (const item of unrated) expect(item.rating).toEqual({ average: null, count: 0 });
+    const times = unrated.map((i) => new Date(i.createdAt).getTime());
+    expect(times).toEqual([...times].sort((a, b) => b - a));
+
+    const seedCookies = await loginCookies(ctx.app, "seed@example.com");
+    const idOf = (name: string) => items.find((i) => i.name === name)?.id as string;
+    const detail = async (name: string) => {
+      const res = await ctx.app.inject({
+        method: "GET",
+        url: withId(ApiPaths.lesson, idOf(name)),
+        cookies: seedCookies,
+      });
+      expect(res.statusCode).toBe(200);
+      return LessonDetailSchema.parse(res.json());
+    };
+    expect(await detail("Money beat")).toMatchObject({ myRating: 5, canRate: true });
+    expect(await detail("Single paradiddles")).toMatchObject({ myRating: 4 });
+    expect(await detail("Weak hand eighth notes")).toMatchObject({ myRating: null, canRate: true });
+    expect(await detail("Four on the floor")).toMatchObject({ myRating: null, canRate: false });
+
+    // R3 in the seed data: every rating has a log of the same user and lesson.
+    const orphans = await ctx.db.execute(sql`
+      select 1 from lesson_ratings r
+      where not exists (
+        select 1 from practice_logs p where p.user_id = r.user_id and p.lesson_id = r.lesson_id
+      )
+    `);
+    expect(orphans.rows).toHaveLength(0);
+    // The stored aggregate equals the recompute for every lesson.
+    const drift = await ctx.db.execute(sql`
+      select l.id from lessons l
+      where l.rating_count <> (select count(*) from lesson_ratings r where r.lesson_id = l.id)
+         or l.rating_avg is distinct from (
+           select round(avg(r.rating), 2) from lesson_ratings r where r.lesson_id = l.id
+         )
+    `);
+    expect(drift.rows).toHaveLength(0);
   };
 
   const INSTRUMENT_CODES = { "hihat-closed": "H", snare: "S", kick: "K" } as const;

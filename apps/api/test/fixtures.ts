@@ -3,12 +3,14 @@ import { ApiPaths, type Signature } from "@drum-tutor/contracts";
 import {
   type Database,
   type LessonRow,
+  lessonRatings,
   lessons,
   lessonTags,
   type NewLessonRow,
   type NewPracticeLogRow,
   type PracticeLogRow,
   practiceLogs,
+  recomputeLessonRating,
   type TagRow,
   tags,
   users,
@@ -93,4 +95,13 @@ export async function insertPracticeLog(
     })
     .returning();
   return row as PracticeLogRow;
+}
+
+/** Inserts a rating and refreshes the lesson's aggregate, without going through the endpoint. */
+export async function insertRating(
+  db: Database,
+  values: { lessonId: string; userId: string; rating: number },
+): Promise<void> {
+  await db.insert(lessonRatings).values(values);
+  await recomputeLessonRating(db, values.lessonId);
 }
