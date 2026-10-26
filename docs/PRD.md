@@ -100,13 +100,14 @@ Created only when an exercise runs to the end. Contains:
 ### 4.5 Rating
 
 - Integer 1–5.
-- One rating per user per lesson; the user may change it at any time.
+- One rating per user per lesson; the user may change it at any time. A rating cannot be removed, only changed (ADR-0056).
 - Allowed only if the user has at least one practice log for that lesson.
 - A lesson's displayed rating = average of all users' ratings + number of ratings.
+- Sorting by rating orders by the average; lessons with the same average are ordered by number of ratings (ADR-0057).
 
 ## 5. User stories
 
-A checked story is implemented and verified end to end. The scope that delivered it is listed in [docs/specs/](specs/README.md) (US-1: `project-foundation`; US-3, US-4, US-16, US-17a, US-18, US-19: `lessons-and-tags`; US-7, US-8, US-9, US-10, US-11, US-11a, US-11b, US-14, US-15: `practice-and-stats`; US-17: `signature`).
+A checked story is implemented and verified end to end. The scope that delivered it is listed in [docs/specs/](specs/README.md) (US-1: `project-foundation`; US-3, US-4, US-16, US-17a, US-18, US-19: `lessons-and-tags`; US-7, US-8, US-9, US-10, US-11, US-11a, US-11b, US-14, US-15: `practice-and-stats`; US-17: `signature`; US-2, US-5, US-6, US-12, US-13: `rating`).
 
 ### 5.1 Identification
 
@@ -114,14 +115,14 @@ A checked story is implemented and verified end to end. The scope that delivered
 
 ### 5.2 Library
 
-- [ ] **US-2** As a drummer, I browse the **paginated** list of lessons. Each item shows: name, difficulty, tags, average rating with rating count, recommended tempo and duration. Filters and sorting apply to the whole result set, not only the current page.
+- [x] **US-2** As a drummer, I browse the **paginated** list of lessons. Each item shows: name, difficulty, tags, average rating with rating count, recommended tempo and duration. Filters and sorting apply to the whole result set, not only the current page.
 - [x] **US-3** As a drummer, I filter by tags. Selecting multiple tags **narrows** the results: a lesson must have **all** selected tags.
 - [x] **US-4** As a drummer, I filter by difficulty. I can select one or more levels; a lesson matching **any** selected level is shown.
-- [ ] **US-5** As a drummer, I sort by creation date (newest / oldest) or by average rating. Lessons with no ratings go last when sorting by rating.
+- [x] **US-5** As a drummer, I sort by creation date (newest / oldest) or by average rating. Lessons with no ratings go last when sorting by rating. Sorting by rating is the default (ADR-0058).
 
 ### 5.3 Lesson start screen
 
-- [ ] **US-6** As a drummer, I open a lesson and see its name, description, difficulty, tags, rating and the signature rendered from its configuration. _(signature part delivered by `signature`; rating still missing.)_
+- [x] **US-6** As a drummer, I open a lesson and see its name, description, difficulty, tags, rating and the signature rendered from its configuration.
 - [x] **US-7** As a drummer, before starting, I can change the tempo and the duration (pre-filled with the recommended values, within the allowed ranges).
 
 ### 5.4 Practice session
@@ -135,8 +136,8 @@ A checked story is implemented and verified end to end. The scope that delivered
 
 ### 5.5 Rating
 
-- [ ] **US-12** As a drummer who has never completed a lesson, I see the rating control **disabled**, with a call to action to try the lesson first.
-- [ ] **US-13** As a drummer who has completed a lesson at least once, the rating control is active; I can rate 1–5 and change my rating later.
+- [x] **US-12** As a drummer who has never completed a lesson, I see the rating control **disabled**, with a call to action to try the lesson first.
+- [x] **US-13** As a drummer who has completed a lesson at least once, the rating control is active; I can rate 1–5 and change my rating later.
 
 ### 5.6 Statistics
 

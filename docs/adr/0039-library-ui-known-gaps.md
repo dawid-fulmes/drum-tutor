@@ -1,7 +1,7 @@
 # ADR-0039: Leave known small gaps in the drummer library UI until the rating scope
 
 - **Type:** tech-debt
-- **Status:** open
+- **Status:** superseded by ADR-0060
 - **Date:** 2026-10-25
 - **Related:** specs/lessons-and-tags, ADR-0027, ADR-0038
 
